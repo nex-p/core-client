@@ -1,0 +1,38 @@
+{
+  "name": "@nexp/core",
+  "version": "0.5.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "@ant-design/icons": "^6.0.0",
+    "@ant-design/pro-components": "^2.8.9",
+    "@sinclair/typebox": "^0.34.28",
+    "antd": "^5.26.3",
+    "axios": "^1.9.0",
+    "handlebars": "^4.7.8",
+    "log": "^6.3.2",
+    "lucide-react": "^0.525.0",
+    "next": "^12.2.5 || ^13 || ^14 || ^15",
+    "next-auth": "^4.24.11",
+    "puppeteer": "^24.4.0",
+    "rc-upload": "^4.9.2",
+    "react": "^17.0.2 || ^18 || ^19",
+    "react-dom": "^17.0.2 || ^18 || ^19"
+  }
+}

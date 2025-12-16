@@ -1,0 +1,20 @@
+import { ActionType } from "@ant-design/pro-components";
+import { FormInstance } from "antd";
+import React, { RefObject } from "react";
+import { UIPermission } from "../types";
+declare const CreateForm: ({ entity, scope, actionRef, title, btnTitle, permission, content, init_data, excludeKeys, redirectAfterCreate, afterCreate, transformData, preProcess }: {
+    entity: string;
+    scope: string;
+    actionRef?: RefObject<ActionType | undefined>;
+    title?: string;
+    btnTitle?: string;
+    permission: UIPermission;
+    content: (formRef: FormInstance, data?: any) => React.ReactNode;
+    init_data?: any;
+    excludeKeys?: string[];
+    redirectAfterCreate?: (record: Record<string, any>) => void;
+    afterCreate?: (record: Record<string, any>) => void;
+    transformData?: (data: Record<string, any>) => Record<string, any> | Record<string, any>[];
+    preProcess?: (record: Record<string, any>) => Promise<void>;
+}) => import("react/jsx-runtime").JSX.Element;
+export default CreateForm;

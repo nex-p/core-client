@@ -1,0 +1,75 @@
+import { UIPermission } from "../types";
+export declare class DataCore {
+    private filters;
+    private headers;
+    private fields;
+    private entity;
+    private scope;
+    private prefer;
+    private url?;
+    private token?;
+    constructor(entity?: string, scope?: string, token?: string);
+    private isServerSide;
+    select(...fields: string[]): this;
+    order(key: string, ascending?: boolean): this;
+    limit(count: number): this;
+    offset(count: number): this;
+    eq(key: string, value: string | number): this;
+    neq(key: string, value: string | number): this;
+    lt(key: string, value: string): this;
+    lte(key: string, value: string): this;
+    gt(key: string, value: string): this;
+    gte(key: string, value: string): this;
+    between(key: string, value: string, value1: string): this;
+    notBetween(key: string, value: string, value1: string): this;
+    ilike(key: string, value: string): this;
+    like(key: string, value: string): this;
+    not_like(key: string, value: string): this;
+    startWith(key: string, value: string): this;
+    endWith(key: string, value: string): this;
+    in(key: string, values: (string | number)[]): this;
+    contains(key: string, values: (string | number)[], negative?: boolean): this;
+    isNull(key: string): this;
+    or(conditions: string[]): this;
+    extends(refFieldName: string, refEntityFields: string[]): this;
+    includeCount(): this;
+    private queryPreProcess;
+    private setServerSide;
+    allowRowOperations(data: {
+        operation: "delete" | "update";
+        id_value: string;
+        id_field?: string;
+        payload?: Record<string, any>;
+    }): Promise<boolean>;
+    allowOperations(): Promise<Record<string, Record<string, Record<string, string[]>>>>;
+    allowOperation(operation: "SELECT" | "INSERT" | "DELETE" | "UPDATE"): Promise<UIPermission>;
+    allowRead(): Promise<UIPermission>;
+    allowInsert(): Promise<UIPermission>;
+    allowUpdate(): Promise<UIPermission>;
+    allowDelete(): Promise<UIPermission>;
+    allowPermission(): Promise<{
+        read: UIPermission;
+        insert: UIPermission;
+        update: UIPermission;
+        delete: UIPermission;
+    }>;
+    private _payload?;
+    payload(data: Record<string, any>): this;
+    query(): Promise<{
+        data: Record<string, any>[];
+        count?: number;
+    }>;
+    queryByCoreId(core_id: string): Promise<Record<string, any>>;
+    insert(): Promise<Record<string, any>[]>;
+    update(): Promise<Record<string, any>[]>;
+    updateById(coreId: string): Promise<{
+        data: Record<string, any>[];
+    }>;
+    upsert(on_conflict: string[]): Promise<Record<string, any>[]>;
+    deleteById(coreId: string): Promise<Record<string, any>[]>;
+    delete(): Promise<Record<string, any>[]>;
+    checkInsert(): Promise<Record<string, any>[]>;
+    checkUpdateById(coreId: string): Promise<Record<string, any>[]>;
+    chcekUpsert(): Promise<Record<string, any>[]>;
+    checkDeleteById(coreId: string): Promise<Record<string, any>[]>;
+}

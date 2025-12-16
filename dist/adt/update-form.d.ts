@@ -1,0 +1,20 @@
+import { ActionType } from "@ant-design/pro-components";
+import { FormInstance } from "antd";
+import { RefObject } from "react";
+import { UIPermission } from "../types";
+declare const UpdateForm: ({ coreId, entity, scope, actionRef, title, permission, content, data, excludeKeys, afterUpdate, transformData, record }: {
+    record: Record<string, any>;
+    coreId: string;
+    entity: string;
+    scope: string;
+    actionRef: RefObject<ActionType | undefined>;
+    title?: string;
+    btnTitle?: string;
+    permission: UIPermission;
+    content: (formRef: FormInstance, record?: Record<string, any>) => React.ReactNode;
+    data: any;
+    excludeKeys?: string[];
+    afterUpdate?: (record: Record<string, any>) => void;
+    transformData?: (data: Record<string, any>) => Record<string, any> | Record<string, any>[];
+}) => import("react/jsx-runtime").JSX.Element;
+export default UpdateForm;
