@@ -23,6 +23,8 @@ export declare class DataCore {
     between(key: string, value: string, value1: string): this;
     notBetween(key: string, value: string, value1: string): this;
     ilike(key: string, value: string): this;
+    plfts(key: string, value: string): this;
+    cs(key: string, value: string): this;
     like(key: string, value: string): this;
     not_like(key: string, value: string): this;
     startWith(key: string, value: string): this;
@@ -31,6 +33,7 @@ export declare class DataCore {
     contains(key: string, values: (string | number)[], negative?: boolean): this;
     isNull(key: string): this;
     or(conditions: string[]): this;
+    and(conditions: string[]): this;
     extends(refFieldName: string, refEntityFields: string[]): this;
     includeCount(): this;
     private queryPreProcess;

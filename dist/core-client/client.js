@@ -66,7 +66,15 @@ export class DataCore {
         return this;
     }
     ilike(key, value) {
-        this.filters[key] = `ilike.*${encodeURIComponent(value)}*`;
+        this.filters[key] = `ilike.*%${value.split(" ").join("%")}%`;
+        return this;
+    }
+    plfts(key, value) {
+        this.filters[key] = `phfts(english).${encodeURIComponent(value)}`;
+        return this;
+    }
+    cs(key, value) {
+        this.filters[key] = `cs.{${encodeURIComponent(value.split(" ").join())}}`;
         return this;
     }
     like(key, value) {
@@ -100,7 +108,11 @@ export class DataCore {
         return this;
     }
     or(conditions) {
-        this.filters.push(`or=(${conditions.join(",")})`);
+        this.filters['or'] = `(${conditions.join(",")})`;
+        return this;
+    }
+    and(conditions) {
+        this.filters['and'] = `(${conditions.join(",")})`;
         return this;
     }
     extends(refFieldName, refEntityFields) {
@@ -119,10 +131,8 @@ export class DataCore {
     }
     async setServerSide() {
         if (!this.token) {
-            throw Error("To set server side required  token.");
-        }
-        if (!this.token) {
-            throw Error("Authentication Issue.");
+            console.log("Consider as public user");
+            return;
         }
         this.headers.set("Authorization", `Bearer ${this.token}`);
     }
@@ -250,7 +260,7 @@ export class DataCore {
         var _a, _b;
         if (this.isServerSide()) {
             await this.setServerSide();
-            this.url = `${process.env.CORE_DATA_URL}/data-hub/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
@@ -361,7 +371,7 @@ export class DataCore {
         var _a, _b;
         if (this.isServerSide()) {
             await this.setServerSide();
-            this.url = `${process.env.CORE_DATA_URL}/data-hub/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
@@ -377,13 +387,16 @@ export class DataCore {
             .catch((e) => rej(e)));
     }
     async delete() {
-        var _a, _b;
+        var _a, _b, _c;
         if (this.isServerSide()) {
             await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
+        }
+        if (Object.keys((_c = this.filters) !== null && _c !== void 0 ? _c : {}).length == 0) {
+            throw new Error("at least one filter value should be there");
         }
         this.headers.set("prefer", "tx=commit");
         return new Promise((res, rej) => axios
@@ -399,7 +412,7 @@ export class DataCore {
         var _a, _b;
         if (this.isServerSide()) {
             await this.setServerSide();
-            this.url = `${process.env.CORE_DATA_URL}/data-hub/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
@@ -420,7 +433,7 @@ export class DataCore {
         var _a, _b;
         if (this.isServerSide()) {
             await this.setServerSide();
-            this.url = `${process.env.CORE_DATA_URL}/data-hub/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
@@ -442,7 +455,7 @@ export class DataCore {
         var _a, _b;
         if (this.isServerSide()) {
             await this.setServerSide();
-            this.url = `${process.env.CORE_DATA_URL}/data-hub/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
@@ -460,7 +473,7 @@ export class DataCore {
         var _a, _b;
         if (this.isServerSide()) {
             await this.setServerSide();
-            this.url = `${process.env.CORE_DATA_URL}/data-hub/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
