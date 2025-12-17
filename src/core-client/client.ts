@@ -3,7 +3,7 @@ import { UIPermission } from "../types";
 
 export class DataCore {
   private filters: Record<string, any> = {};
-  private headers: AxiosHeaders = new AxiosHeaders();
+  private headers: InstanceType<typeof AxiosHeaders> = new AxiosHeaders();
 
   private fields: string[] = [];
 
@@ -94,7 +94,17 @@ export class DataCore {
   }
 
   ilike(key: string, value: string) {
-    this.filters[key] = `ilike.*${encodeURIComponent(value)}*`;
+    this.filters[key] = `ilike.*%${value.split(" ").join("%")}%`;
+    return this;
+  }
+
+  plfts(key: string, value: string) {
+    this.filters[key] = `phfts(english).${encodeURIComponent(value)}`;
+    return this;
+  }
+
+  cs(key: string, value: string) {
+    this.filters[key] = `cs.{${encodeURIComponent(value.split(" ").join())}}`;
     return this;
   }
 
@@ -137,7 +147,12 @@ export class DataCore {
   }
 
   or(conditions: string[]) {
-    this.filters.push(`or=(${conditions.join(",")})`);
+     this.filters['or'] = `(${conditions.join(",")})`;
+    return this;
+  }
+
+  and(conditions: string[]) {
+    this.filters['and'] =`(${conditions.join(",")})`;
     return this;
   }
 
@@ -162,11 +177,8 @@ export class DataCore {
 
   private async setServerSide() {
     if (!this.token) {
-      throw Error("To set server side required  token.");
-    }
-
-    if (!this.token) {
-      throw Error("Authentication Issue.");
+      console.log("Consider as public user");
+      return;
     }
 
     this.headers.set("Authorization", `Bearer ${this.token}`);
@@ -344,9 +356,9 @@ export class DataCore {
   async queryByCoreId(core_id: string): Promise<Record<string, any>> {
     if (this.isServerSide()) {
       await this.setServerSide();
-      this.url = `${process.env.CORE_DATA_URL}/data-hub/${
-        this.scope ?? "core"
-      }/${this.entity}`;
+      this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
+        this.entity
+      }`;
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
@@ -464,7 +476,8 @@ export class DataCore {
     }
 
     this.headers.set(
-      "prefer","tx=commit,resolution=merge-duplicates,missing=default,return=representation"
+      "prefer",
+      "tx=commit,resolution=merge-duplicates,missing=default,return=representation"
     );
 
     if (on_conflict.length > 0) {
@@ -485,9 +498,9 @@ export class DataCore {
   async deleteById(coreId: string): Promise<Record<string, any>[]> {
     if (this.isServerSide()) {
       await this.setServerSide();
-      this.url = `${process.env.CORE_DATA_URL}/data-hub/${
-        this.scope ?? "core"
-      }/${this.entity}`;
+      this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
+        this.entity
+      }`;
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
@@ -517,6 +530,10 @@ export class DataCore {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
 
+    if (Object.keys(this.filters ?? {}).length == 0) {
+      throw new Error("at least one filter value should be there");
+    }
+
     this.headers.set("prefer", "tx=commit");
 
     return new Promise<Record<string, any>[]>((res, rej) =>
@@ -534,9 +551,9 @@ export class DataCore {
   async checkInsert(): Promise<Record<string, any>[]> {
     if (this.isServerSide()) {
       await this.setServerSide();
-      this.url = `${process.env.CORE_DATA_URL}/data-hub/${
-        this.scope ?? "core"
-      }/${this.entity}`;
+      this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
+        this.entity
+      }`;
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
@@ -560,12 +577,13 @@ export class DataCore {
   async checkUpdateById(coreId: string): Promise<Record<string, any>[]> {
     if (this.isServerSide()) {
       await this.setServerSide();
-      this.url = `${process.env.CORE_DATA_URL}/data-hub/${
-        this.scope ?? "core"
-      }/${this.entity}`;
+      this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
+        this.entity
+      }`;
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
+
     this.eq("core_id", coreId);
 
     if (!this._payload || !this.filters) {
@@ -588,9 +606,9 @@ export class DataCore {
   async chcekUpsert(): Promise<Record<string, any>[]> {
     if (this.isServerSide()) {
       await this.setServerSide();
-      this.url = `${process.env.CORE_DATA_URL}/data-hub/${
-        this.scope ?? "core"
-      }/${this.entity}`;
+      this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
+        this.entity
+      }`;
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
@@ -610,9 +628,9 @@ export class DataCore {
   async checkDeleteById(coreId: string): Promise<Record<string, any>[]> {
     if (this.isServerSide()) {
       await this.setServerSide();
-      this.url = `${process.env.CORE_DATA_URL}/data-hub/${
-        this.scope ?? "core"
-      }/${this.entity}`;
+      this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
+        this.entity
+      }`;
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
