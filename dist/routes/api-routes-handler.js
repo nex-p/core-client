@@ -2,16 +2,6 @@
 import axios, { AxiosHeaders, isAxiosError } from "axios";
 import { getServerSession } from "next-auth";
 import { Readable } from "stream";
-import handlebars from "handlebars";
-import puppeteer from "puppeteer";
-import { Type } from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
-import { DataCore } from "../core-client/client";
-const TemplatePayload = Type.Object({
-    template_name: Type.String(),
-    data: Type.Any(),
-});
-// /** The main entry point to next-auth */
 function CoreAPIHandler(options) {
     return async (req, { params }) => {
         const { paths } = await params;
@@ -33,9 +23,6 @@ function CoreAPIHandler(options) {
         }
         if (paths[0] == "file" && req.method == "GET") {
             return handleAttachmentDownload(req, session.accessToken.accessToken);
-        }
-        if (paths[0] == "reports" && req.method == "POST") {
-            return handleReport(req, session.accessToken.accessToken);
         }
         return Response.json(data, { status: 200 });
     };
@@ -200,45 +187,3 @@ async function handleAttachmentDownload(req, accessToken) {
         return new Response("Something went wrong", { status: 500 });
     }
 }
-async function handleReport(req, accessToken) {
-    try {
-        const payload = await req.json();
-        const check = Value.Check(TemplatePayload, payload);
-        if (!check) {
-            return new Response("Bad request", { status: 400 });
-        }
-        const resp = await new DataCore("report_template", "erp", accessToken)
-            .includeCount()
-            .eq("name", payload.template_name)
-            .query();
-        if (!resp.count || resp.count == 0) {
-            return new Response("Invalid Template Name", { status: 400 });
-        }
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
-        const page = await browser.newPage();
-        const htmlContent = compileTemplate(resp.data[0].template, payload.data);
-        await page.setContent(htmlContent, { waitUntil: "networkidle0" });
-        const pdfBuffer = await page.pdf({ format: "A4" });
-        await browser.close();
-        return new Response(pdfBuffer, {
-            status: 200,
-            headers: {
-                "Content-Type": "application/pdf",
-            },
-        });
-    }
-    catch (e) {
-        console.log(e);
-        return new Response("Something went wrong", { status: 500 });
-    }
-}
-const compileTemplate = (_template, data) => {
-    handlebars.registerHelper("uppercase", function (aString) {
-        return aString === null || aString === void 0 ? void 0 : aString.toUpperCase();
-    });
-    const template = handlebars.compile(_template);
-    return template(data);
-};
