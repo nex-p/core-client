@@ -1,7 +1,7 @@
-import { FilterDropdownProps } from "antd/lib/table/interface";
 import { FunctionComponent } from "react";
-declare const FilterRef: FunctionComponent<{
-    props: FilterDropdownProps;
+import { FormInstance } from "antd/lib";
+declare const QueryRef: FunctionComponent<{
+    formInstance: FormInstance;
     entity: string;
     scope: string;
     field: string;
@@ -9,4 +9,4 @@ declare const FilterRef: FunctionComponent<{
     renderLabel?: (item: Record<string, any>) => string;
     filterFields?: string[];
 }>;
-export default FilterRef;
+export default QueryRef;

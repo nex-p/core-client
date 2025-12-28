@@ -1,11 +1,9 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { ProForm, ProFormDependency, ProFormSelect, ProFormText, } from "@ant-design/pro-components";
-import { Form } from "antd";
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 const FilterString = ({ props, allowOption }) => {
-    const [form] = Form.useForm();
     const options = useMemo(() => [
         { value: "equal", label: "Equal" },
         { value: "not_equal", label: "Not Equal" },
@@ -21,7 +19,6 @@ const FilterString = ({ props, allowOption }) => {
             const filterValue = JSON.parse(String(data[0]));
             return { filter: filterValue.filter, value: filterValue.value };
         }
-        form.setFieldsValue({ filter: options[0].value });
         return { filter: options[0].value };
     }, [props]);
     return (_jsx("div", { className: "m-5 w-full p-4", children: _jsx(ProForm, { onFinish: (formData) => {
@@ -34,7 +31,7 @@ const FilterString = ({ props, allowOption }) => {
                 props.confirm();
             }, initialValues: initialData, submitter: {
                 searchConfig: { submitText: "Search" },
-            }, form: form, children: _jsxs(ProForm.Group, { children: [_jsx(ProFormSelect, { options: options, width: "sm", name: "filter", allowClear: false }), _jsx(ProFormDependency, { name: ["filter"], children: ({ filter }) => {
+            }, children: _jsxs(ProForm.Group, { children: [_jsx(ProFormSelect, { options: options, width: "sm", name: "filter", allowClear: false }), _jsx(ProFormDependency, { name: ["filter"], children: ({ filter }) => {
                             if (!["not_empty", "empty"].includes(filter)) {
                                 return (_jsx(ProFormText, { name: "value", width: "sm", placeholder: "Search Key", rules: [{ required: true }] }));
                             }

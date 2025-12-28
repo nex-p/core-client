@@ -1,10 +1,8 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { ProForm, ProFormDatePicker, ProFormDateRangePicker, ProFormDependency, ProFormSelect, } from "@ant-design/pro-components";
-import { Form } from "antd";
 import { useMemo } from "react";
 const FilterDate = ({ props, }) => {
-    const [form] = Form.useForm();
     const initialData = useMemo(() => {
         const data = props.selectedKeys;
         if (data.length > 0) {
@@ -15,6 +13,7 @@ const FilterDate = ({ props, }) => {
     }, [props]);
     return (_jsx("div", { className: "m-5 w-full p-4", children: _jsx(ProForm, { onFinish: (formData) => {
                 const data = Object.assign({ type: "date" }, formData);
+                console.log('data', data);
                 props.setSelectedKeys([JSON.stringify(data)]);
                 props.confirm();
             }, onReset: () => {

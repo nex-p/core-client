@@ -2,36 +2,36 @@
 "use client";
 import { jsx as _jsx } from "react/jsx-runtime";
 import { ProForm, ProFormSelect, } from "@ant-design/pro-components";
-import { useMemo } from "react";
 import { DataCore } from "../..";
-import { Form } from "antd";
-const FilterRef = ({ props, entity, scope, field, orderBy, renderLabel, filterFields }) => {
-    const [form] = Form.useForm();
-    const initialData = useMemo(() => {
-        const data = props.selectedKeys;
-        console.log("selectedKeys", data);
-        if (data.length > 0) {
-            const filterValue = JSON.parse(String(data[0]));
-            return Object.assign({}, filterValue);
-        }
-        form.setFieldsValue({ filter: "in", value: [] });
-        return { filter: "in" };
-    }, [props]);
-    return (_jsx("div", { className: "m-5 w-full p-4", children: _jsx(ProForm, { form: form, onFinish: (formData) => {
+const QueryRef = ({ formInstance, entity, scope, field, orderBy, renderLabel, filterFields }) => {
+    // const initialData = useMemo(() => {
+    //   // const data = props.selectedKeys;
+    //   if (data.length > 0) {
+    //     const filterValue = JSON.parse(String(data[0])) as {
+    //       type: string;
+    //       filter: string;
+    //       value: string;
+    //       value1: string;
+    //     };
+    //     return { ...filterValue };
+    //   }
+    //   return { filter: 'in' };
+    // }, [props]);
+    return (_jsx("div", { className: "m-5 w-full p-4", children: _jsx(ProForm, { onFinish: (formData) => {
                 console.log(formData);
                 const data = {
                     type: "ref",
                     filter: "in",
                     value: formData.value.join(","),
                 };
-                props.setSelectedKeys([JSON.stringify(data)]);
-                props.confirm();
+                // props.setSelectedKeys([JSON.stringify(data)]);
+                // props.confirm();
             }, onReset: () => {
-                if (props.clearFilters)
-                    props.clearFilters();
-                props.confirm();
-                form.setFieldValue("value", undefined);
-            }, initialValues: initialData, submitter: {
+                // if (props.clearFilters) props.clearFilters();
+                // props.confirm();
+            }, 
+            // initialValues={initialData}
+            submitter: {
                 searchConfig: { submitText: "Search" },
             }, children: _jsx(ProForm.Group, { children: _jsx(ProFormSelect, { showSearch: true, mode: "multiple", request: ({ keyWords }) => {
                         return new Promise(async (res) => {
@@ -42,7 +42,7 @@ const FilterRef = ({ props, entity, scope, field, orderBy, renderLabel, filterFi
                                 }
                                 if (keyWords) {
                                     if (filterFields && filterFields.length > 0) {
-                                        const orConditions = filterFields.map((f) => `${f}.ilike.*%${keyWords.split(" ").join("%")}%`);
+                                        const orConditions = filterFields.map(f => `${f}.ilike.*%${keyWords.split(" ").join("%")}%`);
                                         dataSource.or(orConditions);
                                     }
                                     else {
@@ -61,4 +61,4 @@ const FilterRef = ({ props, entity, scope, field, orderBy, renderLabel, filterFi
                         });
                     }, rules: [{ required: true }], name: "value", width: "md" }) }) }) }));
 };
-export default FilterRef;
+export default QueryRef;

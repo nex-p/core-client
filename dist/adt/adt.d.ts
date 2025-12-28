@@ -1,4 +1,4 @@
-import { ActionType, ProColumns } from "@ant-design/pro-components";
+import { ActionType, ParamsType, ProColumns, ProTableProps } from "@ant-design/pro-components";
 import { ExpandableConfig } from "antd/es/table/interface";
 import { FormInstance } from "antd/lib";
 import { FunctionComponent, ReactNode, RefObject } from "react";
@@ -17,10 +17,11 @@ interface ADTProps {
         refEntityFields: string[];
     }[];
     updateDataTransform?: (data: Record<string, any>) => Record<string, any>;
+    transformCreateData?: (data: Record<string, any>) => Record<string, any> | Record<string, any>[];
+    transformUpdateData?: (data: Record<string, any>) => Record<string, any> | Record<string, any>[];
     createFormInitialData?: Record<string, any>;
     excludeCreateForm?: string[];
     excludeUpdateForm?: string[];
-    dataCoreFilter?: (dataCore: DataCore) => void;
     createForm?: (form: FormInstance, data?: Record<string, any>) => ReactNode;
     updateForm?: (form: FormInstance, data?: Record<string, any>) => ReactNode;
     getRefURL?: (record: Record<string, any>) => string;
@@ -32,8 +33,19 @@ interface ADTProps {
     createPreProcess?: (record: Record<string, any>) => Promise<void>;
     customRowAction?: (record: Record<string, any>, actionRef?: RefObject<ActionType | undefined>) => ReactNode[];
     expandable?: ExpandableConfig<Record<string, any>>;
-    transformCreateData?: (data: Record<string, any>) => Record<string, any> | Record<string, any>[];
-    transformUpdateData?: (data: Record<string, any>) => Record<string, any> | Record<string, any>[];
+    onRow?: any;
+    params?: ParamsType;
+    dataCoreFilter?: (dataCore: DataCore) => void;
+    showIndexColumn?: boolean;
+    defaultPageSize?: number;
+    enablePersistentState?: boolean;
+    persistenceKey?: string;
+    search?: ProTableProps<Record<string, any>, ParamsType>['search'];
+    options?: ProTableProps<Record<string, any>, ParamsType>['options'];
+    toolBarRender?: ProTableProps<Record<string, any>, ParamsType>['toolBarRender'];
+    pagination?: ProTableProps<Record<string, any>, ParamsType>['pagination'];
+    queryStringKey?: string;
+    footer?: ReactNode;
 }
 declare const ADT: FunctionComponent<ADTProps>;
 export default ADT;

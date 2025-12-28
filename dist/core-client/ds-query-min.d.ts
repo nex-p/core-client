@@ -1,0 +1,28 @@
+type DC = {
+    select: (...fields: string[]) => DC;
+    order: (key: string, ascending?: boolean) => DC;
+    limit: (n: number) => DC;
+    offset: (n: number) => DC;
+    eq: (k: string, v: string | number) => DC;
+    neq: (k: string, v: string | number) => DC;
+    lt: (k: string, v: string) => DC;
+    lte: (k: string, v: string) => DC;
+    gt: (k: string, v: string) => DC;
+    gte: (k: string, v: string) => DC;
+    between: (k: string, a: string, b: string) => DC;
+    notBetween: (k: string, a: string, b: string) => DC;
+    ilike: (k: string, v: string) => DC;
+    plfts: (k: string, v: string) => DC;
+    cs: (k: string, v: string) => DC;
+    like: (k: string, v: string) => DC;
+    not_like: (k: string, v: string) => DC;
+    startWith: (k: string, v: string) => DC;
+    endWith: (k: string, v: string) => DC;
+    in: (k: string, vals: (string | number)[]) => DC;
+    contains: (k: string, vals: (string | number)[], negative?: boolean) => DC;
+    isNull: (k: string) => DC;
+    or: (conds: string[]) => DC;
+    and: (conds: string[]) => DC;
+};
+export declare function ApplyQuery(dc: DC, input: string): DC;
+export {};
