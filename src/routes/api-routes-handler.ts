@@ -169,9 +169,10 @@ async function handleAttachmentUpload(req: Request, accessToken: string) {
       return new Response("Something went wrong", { status: 500 });
     }
   } catch (e) {
+    console.error(e)
     let message;
     if (isAxiosError(e)) {
-      console.log(e.response?.data);
+      console.log(e.response);
 
       message = e.response?.data.message;
       return new Response(message ?? "Something went wrong", {
