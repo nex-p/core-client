@@ -5,6 +5,7 @@ import { Readable } from "stream";
 function CoreAPIHandler(options) {
     return async (req, { params }) => {
         const { paths } = await params;
+        console.log('path', params);
         const session = await getServerSession(options);
         if (!session) {
             return new Response("Autentication Error", { status: 401 });

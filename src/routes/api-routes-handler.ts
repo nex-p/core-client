@@ -12,6 +12,8 @@ function CoreAPIHandler(options: AuthOptions) {
   ) => {
     const { paths } = await params;
 
+    console.log('path', params)
+
     const session = await getServerSession<any, any>(options);
 
     if (!session) {
