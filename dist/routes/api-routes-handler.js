@@ -103,7 +103,7 @@ async function handleUIRequest(req, accessToken) {
     }
 }
 async function handleAttachmentUpload(req, accessToken) {
-    var _a, _b, _c;
+    var _a, _b;
     try {
         const url = `${process.env.CORE_META_URL}/v1/file?ftp=yes`;
         const reader = (_a = req.body) === null || _a === void 0 ? void 0 : _a.getReader();
@@ -136,10 +136,11 @@ async function handleAttachmentUpload(req, accessToken) {
         }
     }
     catch (e) {
+        console.error(e);
         let message;
         if (isAxiosError(e)) {
-            console.log((_b = e.response) === null || _b === void 0 ? void 0 : _b.data);
-            message = (_c = e.response) === null || _c === void 0 ? void 0 : _c.data.message;
+            console.log(e.response);
+            message = (_b = e.response) === null || _b === void 0 ? void 0 : _b.data.message;
             return new Response(message !== null && message !== void 0 ? message : "Something went wrong", {
                 status: 500,
             });
