@@ -137,7 +137,7 @@ async function handleUIRequest(req: Request, accessToken: string) {
 
 async function handleAttachmentUpload(req: Request, accessToken: string) {
   try {
-    const url = `${process.env.CORE_DATA_URL}/v1/file?ftp=yes`;
+    const url = `${process.env.CORE_DATA_URL}/file?ftp=yes`;
 
     const reader = req.body?.getReader();
 
@@ -187,7 +187,7 @@ async function handleAttachmentUpload(req: Request, accessToken: string) {
 
 async function handleAttachmentDownload(req: Request, accessToken: string) {
   try {
-    const url = `${process.env.CORE_DATA_URL}/v1/${
+    const url = `${process.env.CORE_DATA_URL}/${
       req.url.split("/api/core/")[1]
     }`;
 

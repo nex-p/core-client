@@ -106,7 +106,7 @@ async function handleUIRequest(req, accessToken) {
 async function handleAttachmentUpload(req, accessToken) {
     var _a, _b;
     try {
-        const url = `${process.env.CORE_DATA_URL}/v1/file?ftp=yes`;
+        const url = `${process.env.CORE_DATA_URL}/file?ftp=yes`;
         const reader = (_a = req.body) === null || _a === void 0 ? void 0 : _a.getReader();
         if (reader) {
             const stream = new Readable({
@@ -152,7 +152,7 @@ async function handleAttachmentUpload(req, accessToken) {
 async function handleAttachmentDownload(req, accessToken) {
     var _a, _b, _c, _d, _e, _f;
     try {
-        const url = `${process.env.CORE_DATA_URL}/v1/${req.url.split("/api/core/")[1]}`;
+        const url = `${process.env.CORE_DATA_URL}/${req.url.split("/api/core/")[1]}`;
         const headers = new AxiosHeaders();
         headers.set("Authorization", `Bearer ${accessToken}`);
         if (req.headers.has("prefer")) {
