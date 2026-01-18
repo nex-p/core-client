@@ -108,11 +108,11 @@ export class DataCore {
         return this;
     }
     or(conditions) {
-        this.filters['or'] = `(${conditions.join(",")})`;
+        this.filters["or"] = `(${conditions.join(",")})`;
         return this;
     }
     and(conditions) {
-        this.filters['and'] = `(${conditions.join(",")})`;
+        this.filters["and"] = `(${conditions.join(",")})`;
         return this;
     }
     extends(refFieldName, refEntityFields) {
@@ -131,7 +131,7 @@ export class DataCore {
     }
     async setServerSide() {
         if (!this.token) {
-            console.log("Consider as public user");
+            console.log("Consider as public user", this.url);
             return;
         }
         this.headers.set("Authorization", `Bearer ${this.token}`);
@@ -237,12 +237,13 @@ export class DataCore {
     async query() {
         var _a, _b;
         if (this.isServerSide()) {
-            await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            await this.setServerSide();
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
         }
+        console.log("");
         this.headers.set("prefer", "count=exact");
         this.queryPreProcess();
         return new Promise((res, rej) => axios
@@ -259,8 +260,8 @@ export class DataCore {
     async queryByCoreId(core_id) {
         var _a, _b;
         if (this.isServerSide()) {
-            await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            await this.setServerSide();
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;

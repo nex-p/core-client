@@ -147,12 +147,12 @@ export class DataCore {
   }
 
   or(conditions: string[]) {
-     this.filters['or'] = `(${conditions.join(",")})`;
+    this.filters["or"] = `(${conditions.join(",")})`;
     return this;
   }
 
   and(conditions: string[]) {
-    this.filters['and'] =`(${conditions.join(",")})`;
+    this.filters["and"] = `(${conditions.join(",")})`;
     return this;
   }
 
@@ -177,7 +177,7 @@ export class DataCore {
 
   private async setServerSide() {
     if (!this.token) {
-      console.log("Consider as public user");
+      console.log("Consider as public user", this.url);
       return;
     }
 
@@ -206,10 +206,10 @@ export class DataCore {
           { ...data, scope: this.scope, table: this.entity },
           {
             headers: this.headers,
-          }
+          },
         )
         .then((resp) => res(resp.data.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -237,7 +237,7 @@ export class DataCore {
           }
 
           rej(e);
-        })
+        }),
     );
   }
 
@@ -280,7 +280,7 @@ export class DataCore {
             allow: allow,
           });
         })
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -327,13 +327,16 @@ export class DataCore {
 
   async query(): Promise<{ data: Record<string, any>[]; count?: number }> {
     if (this.isServerSide()) {
-      await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
         this.entity
       }`;
+
+      await this.setServerSide();
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
+
+    console.log("");
 
     this.headers.set("prefer", "count=exact");
 
@@ -349,16 +352,16 @@ export class DataCore {
           .catch((e) => {
             console.log(e?.response);
             rej(e);
-          })
+          }),
     );
   }
 
   async queryByCoreId(core_id: string): Promise<Record<string, any>> {
     if (this.isServerSide()) {
-      await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
         this.entity
       }`;
+      await this.setServerSide();
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
@@ -373,7 +376,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data.data[0]))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -400,7 +403,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -427,7 +430,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -461,7 +464,7 @@ export class DataCore {
             rej("Not allow");
           }
         })
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -477,7 +480,7 @@ export class DataCore {
 
     this.headers.set(
       "prefer",
-      "tx=commit,resolution=merge-duplicates,missing=default,return=representation"
+      "tx=commit,resolution=merge-duplicates,missing=default,return=representation",
     );
 
     if (on_conflict.length > 0) {
@@ -491,7 +494,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -516,7 +519,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -543,7 +546,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -570,7 +573,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -599,7 +602,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -621,7 +624,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -644,7 +647,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 }
