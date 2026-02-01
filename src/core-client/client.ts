@@ -201,8 +201,11 @@ export class DataCore {
           ["sign"],
         )
         .then((key) =>
-          crypto.subtle.sign("SHA-256", key, new TextEncoder().encode(payload)),
-        )
+  crypto.subtle.sign(
+    { name: "HMAC", hash: { name: "SHA-256" } },
+    key,
+    new TextEncoder().encode(payload)
+  ))
         .then((buffer) =>
           Array.from(new Uint8Array(buffer))
             .map((b) => b.toString(16).padStart(2, "0"))

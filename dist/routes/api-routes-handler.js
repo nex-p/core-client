@@ -60,10 +60,8 @@ async function handleDataRequest(req, accessToken) {
             const body = config.data ? JSON.stringify(config.data) : "";
             const payload = `${timestamp}.${body}`;
             const signature = await crypto.subtle
-                .importKey("raw", new TextEncoder().encode(secret), "HMAC", false, [
-                "sign",
-            ])
-                .then((key) => crypto.subtle.sign("SHA-256", key, new TextEncoder().encode(payload)))
+                .importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: { name: "SHA-256" } }, false, ["sign"])
+                .then((key) => crypto.subtle.sign({ name: "HMAC", hash: { name: "SHA-256" } }, key, new TextEncoder().encode(payload)))
                 .then((buffer) => Array.from(new Uint8Array(buffer))
                 .map((b) => b.toString(16).padStart(2, "0"))
                 .join(""));
