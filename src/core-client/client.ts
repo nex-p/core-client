@@ -193,9 +193,13 @@ export class DataCore {
       const payload = `${timestamp}.${body}`;
 
       const signature = await crypto.subtle
-        .importKey("raw", new TextEncoder().encode(secret), "HMAC", false, [
-          "sign",
-        ])
+        .importKey(
+          "raw",
+          new TextEncoder().encode(secret),
+          { name: "HMAC", hash: { name: "SHA-256" } },
+          false,
+          ["sign"],
+        )
         .then((key) =>
           crypto.subtle.sign("SHA-256", key, new TextEncoder().encode(payload)),
         )
