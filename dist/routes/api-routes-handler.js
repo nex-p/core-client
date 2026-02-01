@@ -41,6 +41,9 @@ async function buildSignedHeaders(headers, body) {
     const signature = Array.from(new Uint8Array(signatureBuffer))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
+    console.log("X-Timestamp : ", timestamp);
+    console.log("X-Signature : ", signature);
+    console.log("X-SiteId : ", siteId);
     headers.set("X-Timestamp", timestamp);
     headers.set("X-Signature", signature);
     headers.set("X-SiteId", siteId);

@@ -5,7 +5,7 @@ import { AuthOptions, getServerSession } from "next-auth";
 import { Readable } from "stream";
 
 /* -------------------------------------------------------
- * Core handler 
+ * Core handler
  * ----------------------------------------------------- */
 
 function CoreAPIHandler(options: AuthOptions): any;
@@ -40,10 +40,7 @@ function extractPath(req: Request, marker: string) {
   return req.url.split(marker)[1] ?? "";
 }
 
-async function buildSignedHeaders(
-  headers: AxiosHeaders,
-  body?: unknown,
-) {
+async function buildSignedHeaders(headers: AxiosHeaders, body?: unknown) {
   const secret = process.env.NXP_SECRECT;
   const siteId = process.env.NXP_SITE_ID;
 
@@ -70,6 +67,10 @@ async function buildSignedHeaders(
   const signature = Array.from(new Uint8Array(signatureBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+
+  console.log("X-Timestamp : ", timestamp);
+  console.log("X-Signature : ", signature);
+  console.log("X-SiteId : ", siteId);
 
   headers.set("X-Timestamp", timestamp);
   headers.set("X-Signature", signature);
