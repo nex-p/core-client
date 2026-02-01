@@ -54,8 +54,6 @@ async function handleDataRequest(req: Request, accessToken?: string) {
       headers.set("prefer", req.headers.get("prefer"));
     }
 
-    console.log("HEADER ::: ", req.headers.get("prefer"));
-
     const config: any = {
       method: req.method,
       url,
@@ -229,7 +227,6 @@ async function handleAttachmentDownload(req: Request, accessToken?: string) {
     }`;
 
     const headers = new AxiosHeaders();
-    headers.set("Authorization", `Bearer ${accessToken}`);
 
     if (req.headers.has("prefer")) {
       headers.set("prefer", req.headers.get("prefer"));
@@ -238,9 +235,54 @@ async function handleAttachmentDownload(req: Request, accessToken?: string) {
     const config: any = {
       method: "GET",
       url,
-      headers,
       responseType: "stream",
     };
+
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    } else {
+      const secret = process.env.NXP_SECRECT;
+      if (!secret) {
+        throw new Error("NXP_SECRECT environment variable is not set");
+      }
+
+      const site_id = process.env.NXP_SITE_ID;
+
+      if (!secret) {
+        throw new Error("NXP_SITE_ID environment variable is not set");
+      }
+
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const body = config.data ? JSON.stringify(config.data) : "";
+      const payload = `${timestamp}.${body}`;
+
+      const signature = await crypto.subtle
+        .importKey(
+          "raw",
+          new TextEncoder().encode(secret),
+          { name: "HMAC", hash: { name: "SHA-256" } },
+          false,
+          ["sign"],
+        )
+        .then((key) =>
+          crypto.subtle.sign(
+            { name: "HMAC", hash: { name: "SHA-256" } },
+            key,
+            new TextEncoder().encode(payload),
+          ),
+        )
+        .then((buffer) =>
+          Array.from(new Uint8Array(buffer))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join(""),
+        );
+
+      headers.set("X-Timestamp", timestamp);
+      headers.set("X-Signature", signature);
+      headers.set("X-SiteId", site_id);
+    }
+
+    config.headers = headers;
 
     const resp = await axios(config);
 
