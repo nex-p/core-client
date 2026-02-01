@@ -131,7 +131,28 @@ export class DataCore {
     }
     async setServerSide() {
         if (!this.token) {
-            console.log("Consider as public user", this.url);
+            const secret = process.env.NXP_SECRECT;
+            if (!secret) {
+                throw new Error("NXP_SECRECT environment variable is not set");
+            }
+            const site_id = process.env.NXP_SITE_ID;
+            if (!secret) {
+                throw new Error("NXP_SITE_ID environment variable is not set");
+            }
+            const timestamp = Math.floor(Date.now() / 1000).toString();
+            const body = this._payload ? JSON.stringify(this._payload) : "";
+            const payload = `${timestamp}.${body}`;
+            const signature = await crypto.subtle
+                .importKey("raw", new TextEncoder().encode(secret), "HMAC", false, [
+                "sign",
+            ])
+                .then((key) => crypto.subtle.sign("SHA-256", key, new TextEncoder().encode(payload)))
+                .then((buffer) => Array.from(new Uint8Array(buffer))
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join(""));
+            this.headers.set("X-Timestamp", timestamp);
+            this.headers.set("X-Signature", signature);
+            this.headers.set("X-SiteId", site_id);
             return;
         }
         this.headers.set("Authorization", `Bearer ${this.token}`);
@@ -243,7 +264,6 @@ export class DataCore {
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
         }
-        console.log("");
         this.headers.set("prefer", "count=exact");
         this.queryPreProcess();
         return new Promise((res, rej) => axios

@@ -4,26 +4,24 @@ import { getServerSession } from "next-auth";
 import { Readable } from "stream";
 function CoreAPIHandler(options) {
     return async (req, { params }) => {
+        var _a, _b, _c, _d;
         const { paths } = await params;
         const session = await getServerSession(options);
-        if (!session) {
-            return new Response("Autentication Error", { status: 401 });
-        }
-        const data = {
-            message: "Invaid path",
-        };
         if (paths[0] == "data") {
-            return handleDataRequest(req, session.accessToken.accessToken);
+            return handleDataRequest(req, (_a = session === null || session === void 0 ? void 0 : session.accessToken) === null || _a === void 0 ? void 0 : _a.accessToken);
         }
         if (paths[0] == "ui") {
-            return handleUIRequest(req, session.accessToken.accessToken);
+            return handleUIRequest(req, (_b = session === null || session === void 0 ? void 0 : session.accessToken) === null || _b === void 0 ? void 0 : _b.accessToken);
         }
         if (paths[0] == "file" && req.method == "POST") {
-            return handleAttachmentUpload(req, session.accessToken.accessToken);
+            return handleAttachmentUpload(req, (_c = session === null || session === void 0 ? void 0 : session.accessToken) === null || _c === void 0 ? void 0 : _c.accessToken);
         }
         if (paths[0] == "file" && req.method == "GET") {
-            return handleAttachmentDownload(req, session.accessToken.accessToken);
+            return handleAttachmentDownload(req, (_d = session === null || session === void 0 ? void 0 : session.accessToken) === null || _d === void 0 ? void 0 : _d.accessToken);
         }
+        const data = {
+            message: "Invaid Resource Path",
+        };
         return Response.json(data, { status: 200 });
     };
 }
@@ -33,7 +31,6 @@ async function handleDataRequest(req, accessToken) {
     try {
         const url = `${process.env.CORE_DATA_URL}/v1/${req.url.split("/api/core/data/")[1]}`;
         const headers = new AxiosHeaders();
-        headers.set("Authorization", `Bearer ${accessToken}`);
         headers.set("Content-Type", "application/json");
         if (req.headers.has("prefer")) {
             headers.set("prefer", req.headers.get("prefer"));
@@ -42,12 +39,39 @@ async function handleDataRequest(req, accessToken) {
         const config = {
             method: req.method,
             url,
-            headers,
         };
         // Only add body for applicable methods
         if (["POST", "PUT", "PATCH"].includes(req.method)) {
             config.data = await req.json();
         }
+        if (accessToken) {
+            headers.set("Authorization", `Bearer ${accessToken}`);
+        }
+        else {
+            const secret = process.env.NXP_SECRECT;
+            if (!secret) {
+                throw new Error("NXP_SECRECT environment variable is not set");
+            }
+            const site_id = process.env.NXP_SITE_ID;
+            if (!secret) {
+                throw new Error("NXP_SITE_ID environment variable is not set");
+            }
+            const timestamp = Math.floor(Date.now() / 1000).toString();
+            const body = config.data ? JSON.stringify(config.data) : "";
+            const payload = `${timestamp}.${body}`;
+            const signature = await crypto.subtle
+                .importKey("raw", new TextEncoder().encode(secret), "HMAC", false, [
+                "sign",
+            ])
+                .then((key) => crypto.subtle.sign("SHA-256", key, new TextEncoder().encode(payload)))
+                .then((buffer) => Array.from(new Uint8Array(buffer))
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join(""));
+            headers.set("X-Timestamp", timestamp);
+            headers.set("X-Signature", signature);
+            headers.set("X-SiteId", site_id);
+        }
+        config.headers = headers;
         const resp = await axios(config);
         return req.method === "DELETE"
             ? Response.json({ message: "Successfully deleted the record!" })
