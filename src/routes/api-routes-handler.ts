@@ -180,7 +180,7 @@ async function handleUIRequest(req: Request, accessToken?: string) {
 
 async function handleAttachmentUpload(req: Request, accessToken?: string) {
   try {
-    const url = `${process.env.CORE_META_URL}/v1/file?ftp=yes`;
+    const url = `${process.env.CORE_DATA_URL}/v1/file?ftp=yes`;
     const reader = req.body?.getReader();
 
     if (!reader) throw new Error("Request body missing");
@@ -220,7 +220,7 @@ async function handleAttachmentUpload(req: Request, accessToken?: string) {
 async function handleAttachmentDownload(req: Request, accessToken?: string) {
   try {
     const path = extractPath(req, "/api/core/");
-    const url = `${process.env.CORE_META_URL}/v1/${path}`;
+    const url = `${process.env.CORE_DATA_URL}/${path}`;
 
     const headers = new AxiosHeaders();
     applyPreferHeader(req, headers);
