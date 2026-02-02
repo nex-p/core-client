@@ -181,7 +181,8 @@ async function handleUIRequest(req: Request, accessToken?: string) {
 
 async function handleAttachmentUpload(req: Request, accessToken?: string) {
   try {
-    const url = `${process.env.CORE_DATA_URL}/v1/file?ftp=yes`;
+    const path = extractPath(req, "/api/core/");
+    const url = `${process.env.CORE_DATA_URL}/${path}`;
     const reader = req.body?.getReader();
 
     if (!reader) throw new Error("Request body missing");
