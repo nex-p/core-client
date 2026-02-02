@@ -108,11 +108,11 @@ export class DataCore {
         return this;
     }
     or(conditions) {
-        this.filters['or'] = `(${conditions.join(",")})`;
+        this.filters["or"] = `(${conditions.join(",")})`;
         return this;
     }
     and(conditions) {
-        this.filters['and'] = `(${conditions.join(",")})`;
+        this.filters["and"] = `(${conditions.join(",")})`;
         return this;
     }
     extends(refFieldName, refEntityFields) {
@@ -131,7 +131,26 @@ export class DataCore {
     }
     async setServerSide() {
         if (!this.token) {
-            console.log("Consider as public user");
+            const secret = process.env.NXP_SECRECT;
+            if (!secret) {
+                throw new Error("NXP_SECRECT environment variable is not set");
+            }
+            const site_id = process.env.NXP_SITE_ID;
+            if (!secret) {
+                throw new Error("NXP_SITE_ID environment variable is not set");
+            }
+            const timestamp = Math.floor(Date.now() / 1000).toString();
+            const body = this._payload ? JSON.stringify(this._payload) : "";
+            const payload = `${timestamp}.${body}`;
+            const signature = await crypto.subtle
+                .importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: { name: "SHA-256" } }, false, ["sign"])
+                .then((key) => crypto.subtle.sign({ name: "HMAC", hash: { name: "SHA-256" } }, key, new TextEncoder().encode(payload)))
+                .then((buffer) => Array.from(new Uint8Array(buffer))
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join(""));
+            this.headers.set("X-Timestamp", timestamp);
+            this.headers.set("X-Signature", signature);
+            this.headers.set("X-SiteId", site_id);
             return;
         }
         this.headers.set("Authorization", `Bearer ${this.token}`);
@@ -237,8 +256,8 @@ export class DataCore {
     async query() {
         var _a, _b;
         if (this.isServerSide()) {
-            await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            await this.setServerSide();
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;
@@ -259,8 +278,8 @@ export class DataCore {
     async queryByCoreId(core_id) {
         var _a, _b;
         if (this.isServerSide()) {
-            await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
+            await this.setServerSide();
         }
         else {
             this.url = `/api/core/data/${(_b = this.scope) !== null && _b !== void 0 ? _b : "core"}/${this.entity}`;

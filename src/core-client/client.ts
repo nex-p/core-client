@@ -147,12 +147,12 @@ export class DataCore {
   }
 
   or(conditions: string[]) {
-     this.filters['or'] = `(${conditions.join(",")})`;
+    this.filters["or"] = `(${conditions.join(",")})`;
     return this;
   }
 
   and(conditions: string[]) {
-    this.filters['and'] =`(${conditions.join(",")})`;
+    this.filters["and"] = `(${conditions.join(",")})`;
     return this;
   }
 
@@ -177,7 +177,45 @@ export class DataCore {
 
   private async setServerSide() {
     if (!this.token) {
-      console.log("Consider as public user");
+      const secret = process.env.NXP_SECRECT;
+      if (!secret) {
+        throw new Error("NXP_SECRECT environment variable is not set");
+      }
+
+      const site_id = process.env.NXP_SITE_ID;
+
+      if (!secret) {
+        throw new Error("NXP_SITE_ID environment variable is not set");
+      }
+
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const body = this._payload ? JSON.stringify(this._payload) : "";
+      const payload = `${timestamp}.${body}`;
+
+      const signature = await crypto.subtle
+        .importKey(
+          "raw",
+          new TextEncoder().encode(secret),
+          { name: "HMAC", hash: { name: "SHA-256" } },
+          false,
+          ["sign"],
+        )
+        .then((key) =>
+  crypto.subtle.sign(
+    { name: "HMAC", hash: { name: "SHA-256" } },
+    key,
+    new TextEncoder().encode(payload)
+  ))
+        .then((buffer) =>
+          Array.from(new Uint8Array(buffer))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join(""),
+        );
+
+      this.headers.set("X-Timestamp", timestamp);
+      this.headers.set("X-Signature", signature);
+      this.headers.set("X-SiteId", site_id);
+
       return;
     }
 
@@ -206,10 +244,10 @@ export class DataCore {
           { ...data, scope: this.scope, table: this.entity },
           {
             headers: this.headers,
-          }
+          },
         )
         .then((resp) => res(resp.data.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -237,7 +275,7 @@ export class DataCore {
           }
 
           rej(e);
-        })
+        }),
     );
   }
 
@@ -280,7 +318,7 @@ export class DataCore {
             allow: allow,
           });
         })
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -327,10 +365,11 @@ export class DataCore {
 
   async query(): Promise<{ data: Record<string, any>[]; count?: number }> {
     if (this.isServerSide()) {
-      await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
         this.entity
       }`;
+
+      await this.setServerSide();
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
@@ -338,6 +377,7 @@ export class DataCore {
     this.headers.set("prefer", "count=exact");
 
     this.queryPreProcess();
+
     return new Promise<{ data: Record<string, any>[]; count?: number }>(
       (res, rej) =>
         axios
@@ -349,16 +389,16 @@ export class DataCore {
           .catch((e) => {
             console.log(e?.response);
             rej(e);
-          })
+          }),
     );
   }
 
   async queryByCoreId(core_id: string): Promise<Record<string, any>> {
     if (this.isServerSide()) {
-      await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
         this.entity
       }`;
+      await this.setServerSide();
     } else {
       this.url = `/api/core/data/${this.scope ?? "core"}/${this.entity}`;
     }
@@ -373,7 +413,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data.data[0]))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -400,7 +440,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -427,7 +467,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -461,7 +501,7 @@ export class DataCore {
             rej("Not allow");
           }
         })
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -477,7 +517,7 @@ export class DataCore {
 
     this.headers.set(
       "prefer",
-      "tx=commit,resolution=merge-duplicates,missing=default,return=representation"
+      "tx=commit,resolution=merge-duplicates,missing=default,return=representation",
     );
 
     if (on_conflict.length > 0) {
@@ -491,7 +531,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -516,7 +556,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -543,7 +583,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -570,7 +610,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -599,7 +639,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -621,7 +661,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 
@@ -644,7 +684,7 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
-        .catch((e) => rej(e))
+        .catch((e) => rej(e)),
     );
   }
 }

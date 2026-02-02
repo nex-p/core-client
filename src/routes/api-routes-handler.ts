@@ -1,66 +1,117 @@
 "use server";
+
 import axios, { AxiosHeaders, isAxiosError } from "axios";
 import { AuthOptions, getServerSession } from "next-auth";
 import { Readable } from "stream";
+
+/* -------------------------------------------------------
+ * Core handler
+ * ----------------------------------------------------- */
 
 function CoreAPIHandler(options: AuthOptions): any;
 
 function CoreAPIHandler(options: AuthOptions) {
   return async (
     req: Request,
-    { params }: { params: Promise<{ paths: string[] }> }
+    { params }: { params: Promise<{ paths: string[] }> },
   ) => {
     const { paths } = await params;
-
-    console.log('path', params)
-
     const session = await getServerSession<any, any>(options);
+    const token = session?.accessToken?.accessToken;
 
-    if (!session) {
-      return new Response("Autentication Error", { status: 401 });
-    }
+    if (paths[0] === "data") return handleDataRequest(req, token);
+    if (paths[0] === "ui") return handleUIRequest(req, token);
+    if (paths[0] === "file" && req.method === "POST")
+      return handleAttachmentUpload(req, token);
+    if (paths[0] === "file" && req.method === "GET")
+      return handleAttachmentDownload(req, token);
 
-    const data = {
-      message: "Invaid path",
-    };
-
-    if (paths[0] == "data") {
-      return handleDataRequest(req, session.accessToken.accessToken);
-    }
-
-    if (paths[0] == "ui") {
-      return handleUIRequest(req, session.accessToken.accessToken);
-    }
-
-    if (paths[0] == "file" && req.method == "POST") {
-      return handleAttachmentUpload(req, session.accessToken.accessToken);
-    }
-
-    if (paths[0] == "file" && req.method == "GET") {
-      return handleAttachmentDownload(req, session.accessToken.accessToken);
-    }
-
-    return Response.json(data, { status: 200 });
+    return Response.json({ message: "Invalid Resource Path" });
   };
 }
 
 export default CoreAPIHandler;
 
-async function handleDataRequest(req: Request, accessToken: string) {
+/* -------------------------------------------------------
+ * Helpers
+ * ----------------------------------------------------- */
+
+function extractPath(req: Request, marker: string) {
+  return req.url.split(marker)[1] ?? "";
+}
+
+async function buildSignedHeaders(headers: AxiosHeaders, body?: unknown) {
+  const secret = process.env.NXP_SECRECT;
+  const siteId = process.env.NXP_SITE_ID;
+
+  if (!secret) throw new Error("NXP_SECRECT environment variable is not set");
+  if (!siteId) throw new Error("NXP_SITE_ID environment variable is not set");
+
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const payload = `${timestamp}.${body ? JSON.stringify(body) : ""}`;
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(payload),
+  );
+
+  const signature = Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  console.log("X-Timestamp : ", timestamp);
+  console.log("X-Signature : ", signature);
+  console.log("X-SiteId : ", siteId);
+
+  headers.set("X-Timestamp", timestamp);
+  headers.set("X-Signature", signature);
+  headers.set("X-SiteId", siteId);
+}
+
+function applyPreferHeader(req: Request, headers: AxiosHeaders) {
+  if (req.headers.has("prefer")) {
+    headers.set("prefer", req.headers.get("prefer")!);
+  }
+}
+
+function handleAxiosError(e: unknown) {
+  if (isAxiosError(e)) {
+    const message =
+      e.response?.data?.data?.message ||
+      e.response?.data?.message ||
+      "Something went wrong";
+
+    return new Response(message, {
+      status: e.response?.status ?? 500,
+    });
+  }
+
+  return new Response("Something went wrong", { status: 500 });
+}
+
+/* -------------------------------------------------------
+ * Data API
+ * ----------------------------------------------------- */
+
+async function handleDataRequest(req: Request, accessToken?: string) {
   try {
-    const url = `${process.env.CORE_DATA_URL}/v1/${
-      req.url.split("/api/core/data/")[1]
-    }`;
+    const path = extractPath(req, "/api/core/data/");
+    const url = `${process.env.CORE_DATA_URL}/v1/${path}`;
 
-    const headers = new AxiosHeaders();
-    headers.set("Authorization", `Bearer ${accessToken}`);
-    headers.set("Content-Type", "application/json");
+    const headers = new AxiosHeaders({
+      "Content-Type": "application/json",
+    });
 
-    if (req.headers.has("prefer")) {
-      headers.set("prefer", req.headers.get("prefer"));
-    }
-
-    console.log("HEADER ::: ", req.headers.get("prefer"));
+    applyPreferHeader(req, headers);
 
     const config: any = {
       method: req.method,
@@ -68,43 +119,41 @@ async function handleDataRequest(req: Request, accessToken: string) {
       headers,
     };
 
-    // Only add body for applicable methods
     if (["POST", "PUT", "PATCH"].includes(req.method)) {
       config.data = await req.json();
+    }
+
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    } else {
+      await buildSignedHeaders(headers, config.data);
     }
 
     const resp = await axios(config);
 
     return req.method === "DELETE"
       ? Response.json({ message: "Successfully deleted the record!" })
-      : Response.json({ ...resp.data });
+      : Response.json(resp.data);
   } catch (e) {
-    console.error(e);
-    let message;
-    if (isAxiosError(e)) {
-      console.log(e.response);
-      message = e.response?.data?.data?.message;
-      return new Response(message ?? "Something went wrong", {
-        status: e.response?.status ?? 500,
-      });
-    }
-    return new Response("Something went wrong", { status: 500 });
+    return handleAxiosError(e);
   }
 }
 
-async function handleUIRequest(req: Request, accessToken: string) {
+/* -------------------------------------------------------
+ * UI API
+ * ----------------------------------------------------- */
+
+async function handleUIRequest(req: Request, accessToken?: string) {
   try {
-    const url = `${process.env.CORE_UI_URL}/v1/${
-      req.url.split("/api/core/ui/")[1]
-    }`;
+    const path = extractPath(req, "/api/core/ui/");
+    const url = `${process.env.CORE_UI_URL}/v1/${path}`;
 
-    const headers = new AxiosHeaders();
-    headers.set("Authorization", `Bearer ${accessToken}`);
-    headers.set("Content-Type", "application/json");
+    const headers = new AxiosHeaders({
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    });
 
-    if (req.headers.has("prefer")) {
-      headers.set("prefer", req.headers.get("prefer"));
-    }
+    applyPreferHeader(req, headers);
 
     const config: any = {
       method: req.method,
@@ -112,7 +161,6 @@ async function handleUIRequest(req: Request, accessToken: string) {
       headers,
     };
 
-    // Only add body for applicable methods
     if (["POST", "PUT", "PATCH"].includes(req.method)) {
       config.data = await req.json();
     }
@@ -121,116 +169,86 @@ async function handleUIRequest(req: Request, accessToken: string) {
 
     return req.method === "DELETE"
       ? Response.json({ message: "Successfully deleted the record" })
-      : Response.json({ ...resp.data });
+      : Response.json(resp.data);
   } catch (e) {
-    console.error(e);
-    let message;
-    if (isAxiosError(e)) {
-      message = e.response?.data?.message;
-      return new Response(message ?? "Something went wrong", {
-        status: e.response?.status ?? 500,
-      });
-    }
-    return new Response("Something went wrong", { status: 500 });
+    return handleAxiosError(e);
   }
 }
 
-async function handleAttachmentUpload(req: Request, accessToken: string) {
-  try {
-    const url = `${process.env.CORE_DATA_URL}/file?ftp=yes`;
+/* -------------------------------------------------------
+ * File Upload
+ * ----------------------------------------------------- */
 
+async function handleAttachmentUpload(req: Request, accessToken?: string) {
+  try {
+    const url = `${process.env.CORE_DATA_URL}/v1/file?ftp=yes`;
     const reader = req.body?.getReader();
 
-    if (reader) {
-      const stream = new Readable({
-        async read() {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              this.push(null);
-              break;
-            }
-            this.push(Buffer.from(value));
-          }
-        },
-      });
+    if (!reader) throw new Error("Request body missing");
 
-      const headers = new AxiosHeaders();
-      headers.set("Authorization", `Bearer ${accessToken}`);
-      headers.set("Content-Type", "application/octet-stream");
+    const stream = new Readable({
+      async read() {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) return this.push(null);
+          this.push(Buffer.from(value));
+        }
+      },
+    });
 
-      const resp = await axios({
-        method: req.method,
-        url,
-        headers: headers,
-        data: stream,
-      });
+    const headers = new AxiosHeaders({
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/octet-stream",
+    });
 
-      return Response.json({ ...resp.data });
-    } else {
-      return new Response("Something went wrong", { status: 500 });
-    }
+    const resp = await axios({
+      method: req.method,
+      url,
+      headers,
+      data: stream,
+    });
+
+    return Response.json(resp.data);
   } catch (e) {
-    console.error(e)
-    let message;
-    if (isAxiosError(e)) {
-      console.log(e.response);
-
-      message = e.response?.data.message;
-      return new Response(message ?? "Something went wrong", {
-        status: 500,
-      });
-    }
-    return new Response("Something went wrong", { status: 500 });
+    return handleAxiosError(e);
   }
 }
 
-async function handleAttachmentDownload(req: Request, accessToken: string) {
+/* -------------------------------------------------------
+ * File Download
+ * ----------------------------------------------------- */
+
+async function handleAttachmentDownload(req: Request, accessToken?: string) {
   try {
-    const url = `${process.env.CORE_DATA_URL}/${
-      req.url.split("/api/core/")[1]
-    }`;
+    const path = extractPath(req, "/api/core/");
+    const url = `${process.env.CORE_DATA_URL}/${path}`;
 
     const headers = new AxiosHeaders();
-    headers.set("Authorization", `Bearer ${accessToken}`);
+    applyPreferHeader(req, headers);
 
-    if (req.headers.has("prefer")) {
-      headers.set("prefer", req.headers.get("prefer"));
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    } else {
+      await buildSignedHeaders(headers);
     }
 
-    const config: any = {
+    const resp = await axios({
       method: "GET",
       url,
       headers,
       responseType: "stream",
-    };
-
-    const resp = await axios(config);
-
-    const contentType =
-      resp.headers["content-type"] || "application/octet-stream";
-    const contentDisposition =
-      resp.headers["content-disposition"] || "attachment";
+    });
 
     return new Response(resp.data as any, {
       status: 200,
       headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": contentDisposition,
+        "Content-Type":
+          resp.headers["content-type"] ?? "application/octet-stream",
+        "Content-Disposition":
+          resp.headers["content-disposition"] ?? "attachment",
       },
     });
   } catch (e) {
-    if (isAxiosError(e)) {
-      console.error(e.response?.data);
-    }
-
-    let message;
-    if (isAxiosError(e)) {
-      message = e.response?.data?.data?.message;
-      return new Response(message ?? "Something went wrong", {
-        status: e.response?.status ?? 500,
-      });
-    }
-    return new Response("Something went wrong", { status: 500 });
+    return handleAxiosError(e);
   }
 }
