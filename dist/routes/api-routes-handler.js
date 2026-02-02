@@ -6,7 +6,6 @@ function CoreAPIHandler(options) {
     return async (req, { params }) => {
         var _a;
         const { paths } = await params;
-        console.log('path', params);
         const session = await getServerSession(options);
         const token = (_a = session === null || session === void 0 ? void 0 : session.accessToken) === null || _a === void 0 ? void 0 : _a.accessToken;
         if (paths[0] === "data")
