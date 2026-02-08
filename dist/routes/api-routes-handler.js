@@ -116,6 +116,7 @@ async function handleReportRequest(req, accessToken) {
             method: req.method,
             url,
             headers,
+            responseType: "stream", // 🔑 stream any type
         };
         if (["POST", "PUT", "PATCH"].includes(req.method)) {
             config.data = await req.json();
@@ -127,9 +128,21 @@ async function handleReportRequest(req, accessToken) {
             await buildSignedHeaders(headers, config.data);
         }
         const resp = await axios(config);
-        return req.method === "DELETE"
-            ? Response.json({ message: "Successfully deleted the record!" })
-            : Response.json(resp.data);
+        // Stream Axios response → Web Response
+        const stream = new ReadableStream({
+            start(controller) {
+                resp.data.on("data", (chunk) => controller.enqueue(chunk));
+                resp.data.on("end", () => controller.close());
+                resp.data.on("error", (err) => controller.error(err));
+            },
+        });
+        return new Response(stream, {
+            status: resp.status,
+            headers: Object.assign({}, Object.fromEntries(Object.entries(resp.headers).map(([key, value]) => [
+                key,
+                Array.isArray(value) ? value.join(",") : String(value !== null && value !== void 0 ? value : ""),
+            ]))),
+        });
     }
     catch (e) {
         return handleAxiosError(e);
