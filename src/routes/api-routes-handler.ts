@@ -20,6 +20,7 @@ function CoreAPIHandler(options: AuthOptions) {
     const token = session?.accessToken?.accessToken;
 
     if (paths[0] === "data") return handleDataRequest(req, token);
+    if (paths[0] === "report") return handleReportRequest(req, token);
     if (paths[0] === "ui") return handleUIRequest(req, token);
     if (paths[0] === "file" && req.method === "POST")
       return handleAttachmentUpload(req, token);
@@ -105,6 +106,47 @@ function handleAxiosError(e: unknown) {
 async function handleDataRequest(req: Request, accessToken?: string) {
   try {
     const path = extractPath(req, "/api/core/data/");
+    const url = `${process.env.CORE_DATA_URL}/v1/${path}`;
+
+    const headers = new AxiosHeaders({
+      "Content-Type": "application/json",
+    });
+
+    applyPreferHeader(req, headers);
+
+    const config: any = {
+      method: req.method,
+      url,
+      headers,
+    };
+
+    if (["POST", "PUT", "PATCH"].includes(req.method)) {
+      config.data = await req.json();
+    }
+
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    } else {
+      await buildSignedHeaders(headers, config.data);
+    }
+
+    const resp = await axios(config);
+
+    return req.method === "DELETE"
+      ? Response.json({ message: "Successfully deleted the record!" })
+      : Response.json(resp.data);
+  } catch (e) {
+    return handleAxiosError(e);
+  }
+}
+
+/* -------------------------------------------------------
+ * Report API
+ * ----------------------------------------------------- */
+
+async function handleReportRequest(req: Request, accessToken?: string) {
+  try {
+    const path = extractPath(req, "/api/core/report/");
     const url = `${process.env.CORE_DATA_URL}/v1/${path}`;
 
     const headers = new AxiosHeaders({
