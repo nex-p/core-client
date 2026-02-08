@@ -8,17 +8,24 @@ function CoreAPIHandler(options) {
         const { paths } = await params;
         const session = await getServerSession(options);
         const token = (_a = session === null || session === void 0 ? void 0 : session.accessToken) === null || _a === void 0 ? void 0 : _a.accessToken;
-        if (paths[0] === "data")
+        if (paths[0] === "data") {
             return handleDataRequest(req, token);
-        if (paths[0] === "report")
+        }
+        else if (paths[0] === "report") {
             return handleReportRequest(req, token);
-        if (paths[0] === "ui")
+        }
+        else if (paths[0] === "ui") {
             return handleUIRequest(req, token);
-        if (paths[0] === "file" && req.method === "POST")
+        }
+        else if (paths[0] === "file" && req.method === "POST") {
             return handleAttachmentUpload(req, token);
-        if (paths[0] === "file" && req.method === "GET")
+        }
+        else if (paths[0] === "file" && req.method === "GET") {
             return handleAttachmentDownload(req, token);
-        return Response.json({ message: "Invalid Resource Path" });
+        }
+        else {
+            return Response.json({ message: "Invalid Resource Path" });
+        }
     };
 }
 export default CoreAPIHandler;
@@ -106,6 +113,7 @@ async function handleDataRequest(req, accessToken) {
  * ----------------------------------------------------- */
 async function handleReportRequest(req, accessToken) {
     try {
+        console.log("REPORT");
         const path = extractPath(req, "/api/core/report/");
         const url = `${process.env.CORE_REPORT_URL}/v1/${path}`;
         const headers = new AxiosHeaders({

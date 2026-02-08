@@ -19,15 +19,19 @@ function CoreAPIHandler(options: AuthOptions) {
     const session = await getServerSession<any, any>(options);
     const token = session?.accessToken?.accessToken;
 
-    if (paths[0] === "data") return handleDataRequest(req, token);
-    if (paths[0] === "report") return handleReportRequest(req, token);
-    if (paths[0] === "ui") return handleUIRequest(req, token);
-    if (paths[0] === "file" && req.method === "POST")
+    if (paths[0] === "data") {
+      return handleDataRequest(req, token);
+    } else if (paths[0] === "report") {
+      return handleReportRequest(req, token);
+    } else if (paths[0] === "ui") {
+      return handleUIRequest(req, token);
+    } else if (paths[0] === "file" && req.method === "POST") {
       return handleAttachmentUpload(req, token);
-    if (paths[0] === "file" && req.method === "GET")
+    } else if (paths[0] === "file" && req.method === "GET") {
       return handleAttachmentDownload(req, token);
-
-    return Response.json({ message: "Invalid Resource Path" });
+    } else {
+      return Response.json({ message: "Invalid Resource Path" });
+    }
   };
 }
 
@@ -146,6 +150,7 @@ async function handleDataRequest(req: Request, accessToken?: string) {
 
 async function handleReportRequest(req: Request, accessToken?: string) {
   try {
+    console.log("REPORT");
     const path = extractPath(req, "/api/core/report/");
     const url = `${process.env.CORE_REPORT_URL}/v1/${path}`;
 
