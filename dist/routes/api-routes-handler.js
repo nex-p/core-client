@@ -8,24 +8,19 @@ function CoreAPIHandler(options) {
         const { paths } = await params;
         const session = await getServerSession(options);
         const token = (_a = session === null || session === void 0 ? void 0 : session.accessToken) === null || _a === void 0 ? void 0 : _a.accessToken;
-        if (paths[0] === "data") {
+        if (paths[0] === "data")
             return handleDataRequest(req, token);
-        }
-        else if (paths[0] === "report") {
+        if (paths[0] === "report")
             return handleReportRequest(req, token);
-        }
-        else if (paths[0] === "ui") {
+        if (paths[0] === "ui")
             return handleUIRequest(req, token);
-        }
-        else if (paths[0] === "file" && req.method === "POST") {
+        if (paths[0] === "action" && req.method === "POST")
+            return handleActionRequest(req, token);
+        if (paths[0] === "file" && req.method === "POST")
             return handleAttachmentUpload(req, token);
-        }
-        else if (paths[0] === "file" && req.method === "GET") {
+        if (paths[0] === "file" && req.method === "GET")
             return handleAttachmentDownload(req, token);
-        }
-        else {
-            return Response.json({ message: "Invalid Resource Path" });
-        }
+        return Response.json({ message: "Invalid Resource Path" });
     };
 }
 export default CoreAPIHandler;
@@ -80,6 +75,40 @@ function handleAxiosError(e) {
 async function handleDataRequest(req, accessToken) {
     try {
         const path = extractPath(req, "/api/core/data/");
+        const url = `${process.env.CORE_DATA_URL}/v1/${path}`;
+        const headers = new AxiosHeaders({
+            "Content-Type": "application/json",
+        });
+        applyPreferHeader(req, headers);
+        const config = {
+            method: req.method,
+            url,
+            headers,
+        };
+        if (["POST", "PUT", "PATCH"].includes(req.method)) {
+            config.data = await req.json();
+        }
+        if (accessToken) {
+            headers.set("Authorization", `Bearer ${accessToken}`);
+        }
+        else {
+            await buildSignedHeaders(headers, config.data);
+        }
+        const resp = await axios(config);
+        return req.method === "DELETE"
+            ? Response.json({ message: "Successfully deleted the record!" })
+            : Response.json(resp.data);
+    }
+    catch (e) {
+        return handleAxiosError(e);
+    }
+}
+/* -------------------------------------------------------
+ * Data API
+ * ----------------------------------------------------- */
+async function handleActionRequest(req, accessToken) {
+    try {
+        const path = extractPath(req, "/api/core/action/");
         const url = `${process.env.CORE_DATA_URL}/v1/${path}`;
         const headers = new AxiosHeaders({
             "Content-Type": "application/json",
