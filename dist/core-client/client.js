@@ -443,10 +443,10 @@ export class DataCore {
     async execute(scope, action, action_payload) {
         if (this.isServerSide()) {
             await this.setServerSide();
-            this.url = `${process.env.CORE_ACTION_URL}/v1/${scope}/${action}`;
+            this.url = `${process.env.CORE_ACTION_URL}/v1/${scope}/ui_${action}`;
         }
         else {
-            this.url = `/api/core/action/${scope}/${action}`;
+            this.url = `/api/core/action/${scope}/ui_${action}`;
         }
         this.headers.set("prefer", "tx=commit,return=representation");
         return new Promise((res, rej) => axios

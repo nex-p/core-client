@@ -104,7 +104,7 @@ async function handleDataRequest(req, accessToken) {
     }
 }
 /* -------------------------------------------------------
- * Data API
+ * Action API
  * ----------------------------------------------------- */
 async function handleActionRequest(req, accessToken) {
     try {

@@ -144,7 +144,7 @@ async function handleDataRequest(req: Request, accessToken?: string) {
 
 
 /* -------------------------------------------------------
- * Data API
+ * Action API
  * ----------------------------------------------------- */
 
 async function handleActionRequest(req: Request, accessToken?: string) {
