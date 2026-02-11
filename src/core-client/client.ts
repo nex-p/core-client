@@ -201,11 +201,12 @@ export class DataCore {
           ["sign"],
         )
         .then((key) =>
-  crypto.subtle.sign(
-    { name: "HMAC", hash: { name: "SHA-256" } },
-    key,
-    new TextEncoder().encode(payload)
-  ))
+          crypto.subtle.sign(
+            { name: "HMAC", hash: { name: "SHA-256" } },
+            key,
+            new TextEncoder().encode(payload),
+          ),
+        )
         .then((buffer) =>
           Array.from(new Uint8Array(buffer))
             .map((b) => b.toString(16).padStart(2, "0"))
@@ -363,7 +364,15 @@ export class DataCore {
     return this;
   }
 
+  precheck() {
+    if (!this.entity || !this.scope) {
+      throw new Error("entity or scope configuration is missing.");
+    }
+  }
+
   async query(): Promise<{ data: Record<string, any>[]; count?: number }> {
+    this.precheck();
+
     if (this.isServerSide()) {
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
         this.entity
@@ -394,6 +403,8 @@ export class DataCore {
   }
 
   async queryByCoreId(core_id: string): Promise<Record<string, any>> {
+    this.precheck();
+
     if (this.isServerSide()) {
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
         this.entity
@@ -418,6 +429,8 @@ export class DataCore {
   }
 
   async insert(): Promise<Record<string, any>[]> {
+    this.precheck();
+
     if (this.isServerSide()) {
       await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
@@ -445,6 +458,8 @@ export class DataCore {
   }
 
   async update(): Promise<Record<string, any>[]> {
+    this.precheck();
+
     if (this.isServerSide()) {
       await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
@@ -472,6 +487,8 @@ export class DataCore {
   }
 
   async updateById(coreId: string): Promise<{ data: Record<string, any>[] }> {
+    this.precheck();
+
     if (this.isServerSide()) {
       await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
@@ -506,6 +523,7 @@ export class DataCore {
   }
 
   async upsert(on_conflict: string[]): Promise<Record<string, any>[]> {
+    this.precheck();
     if (this.isServerSide()) {
       await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
@@ -536,6 +554,7 @@ export class DataCore {
   }
 
   async deleteById(coreId: string): Promise<Record<string, any>[]> {
+    this.precheck();
     if (this.isServerSide()) {
       await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
@@ -561,6 +580,7 @@ export class DataCore {
   }
 
   async delete(): Promise<Record<string, any>[]> {
+    this.precheck();
     if (this.isServerSide()) {
       await this.setServerSide();
       this.url = `${process.env.CORE_DATA_URL}/v1/${this.scope ?? "core"}/${
@@ -583,6 +603,32 @@ export class DataCore {
           headers: this.headers,
         })
         .then((resp) => res(resp.data))
+        .catch((e) => rej(e)),
+    );
+  }
+
+  // execute action
+  async execute(
+    scope: string,
+    action: string,
+    action_payload: Record<string, any>,
+  ): Promise<Record<string, any>[]> {
+    if (this.isServerSide()) {
+      await this.setServerSide();
+      this.url = `${process.env.CORE_ACTION_URL}/v1/${scope}/${action}`;
+    } else {
+      this.url = `/api/core/action/${scope}/${action}`;
+    }
+
+    this.headers.set("prefer", "tx=commit,return=representation");
+
+    return new Promise<Record<string, any>[]>((res, rej) =>
+      axios
+        .post<{ data: Record<string, any>[] }>(`${this.url}`, action_payload, {
+          params: this.filters,
+          headers: this.headers,
+        })
+        .then((resp) => res(resp.data.data))
         .catch((e) => rej(e)),
     );
   }

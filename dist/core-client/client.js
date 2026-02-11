@@ -253,8 +253,14 @@ export class DataCore {
         this._payload = data;
         return this;
     }
+    precheck() {
+        if (!this.entity || !this.scope) {
+            throw new Error("entity or scope configuration is missing.");
+        }
+    }
     async query() {
         var _a, _b;
+        this.precheck();
         if (this.isServerSide()) {
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
             await this.setServerSide();
@@ -277,6 +283,7 @@ export class DataCore {
     }
     async queryByCoreId(core_id) {
         var _a, _b;
+        this.precheck();
         if (this.isServerSide()) {
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
             await this.setServerSide();
@@ -296,6 +303,7 @@ export class DataCore {
     }
     async insert() {
         var _a, _b;
+        this.precheck();
         if (this.isServerSide()) {
             await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
@@ -317,6 +325,7 @@ export class DataCore {
     }
     async update() {
         var _a, _b;
+        this.precheck();
         if (this.isServerSide()) {
             await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
@@ -338,6 +347,7 @@ export class DataCore {
     }
     async updateById(coreId) {
         var _a, _b;
+        this.precheck();
         if (this.isServerSide()) {
             await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
@@ -367,6 +377,7 @@ export class DataCore {
     }
     async upsert(on_conflict) {
         var _a, _b;
+        this.precheck();
         if (this.isServerSide()) {
             await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
@@ -388,6 +399,7 @@ export class DataCore {
     }
     async deleteById(coreId) {
         var _a, _b;
+        this.precheck();
         if (this.isServerSide()) {
             await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
@@ -407,6 +419,7 @@ export class DataCore {
     }
     async delete() {
         var _a, _b, _c;
+        this.precheck();
         if (this.isServerSide()) {
             await this.setServerSide();
             this.url = `${process.env.CORE_DATA_URL}/v1/${(_a = this.scope) !== null && _a !== void 0 ? _a : "core"}/${this.entity}`;
@@ -424,6 +437,24 @@ export class DataCore {
             headers: this.headers,
         })
             .then((resp) => res(resp.data))
+            .catch((e) => rej(e)));
+    }
+    // execute action
+    async execute(scope, action, action_payload) {
+        if (this.isServerSide()) {
+            await this.setServerSide();
+            this.url = `${process.env.CORE_ACTION_URL}/v1/${scope}/${action}`;
+        }
+        else {
+            this.url = `/api/core/action/${scope}/${action}`;
+        }
+        this.headers.set("prefer", "tx=commit,return=representation");
+        return new Promise((res, rej) => axios
+            .post(`${this.url}`, action_payload, {
+            params: this.filters,
+            headers: this.headers,
+        })
+            .then((resp) => res(resp.data.data))
             .catch((e) => rej(e)));
     }
     // check functions

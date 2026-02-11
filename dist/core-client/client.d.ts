@@ -58,6 +58,7 @@ export declare class DataCore {
     }>;
     private _payload?;
     payload(data: Record<string, any>): this;
+    precheck(): void;
     query(): Promise<{
         data: Record<string, any>[];
         count?: number;
@@ -71,6 +72,7 @@ export declare class DataCore {
     upsert(on_conflict: string[]): Promise<Record<string, any>[]>;
     deleteById(coreId: string): Promise<Record<string, any>[]>;
     delete(): Promise<Record<string, any>[]>;
+    execute(scope: string, action: string, action_payload: Record<string, any>): Promise<Record<string, any>[]>;
     checkInsert(): Promise<Record<string, any>[]>;
     checkUpdateById(coreId: string): Promise<Record<string, any>[]>;
     chcekUpsert(): Promise<Record<string, any>[]>;
