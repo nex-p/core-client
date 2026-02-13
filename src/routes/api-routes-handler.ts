@@ -150,7 +150,7 @@ async function handleDataRequest(req: Request, accessToken?: string) {
 async function handleActionRequest(req: Request, accessToken?: string) {
   try {
     const path = extractPath(req, "/api/core/action/");
-    const url = `${process.env.CORE_DATA_URL}/v1/${path}`;
+    const url = `${process.env.CORE_ACTION_URL}/v1/${path}`;
 
     const headers = new AxiosHeaders({
       "Content-Type": "application/json",
