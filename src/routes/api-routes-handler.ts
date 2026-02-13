@@ -184,7 +184,6 @@ async function handleActionRequest(req: Request, accessToken?: string) {
   }
 }
 
-
 /* -------------------------------------------------------
  * Report API
  * ----------------------------------------------------- */

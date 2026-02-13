@@ -615,9 +615,9 @@ export class DataCore {
   ): Promise<Record<string, any>[]> {
     if (this.isServerSide()) {
       await this.setServerSide();
-      this.url = `${process.env.CORE_ACTION_URL}/v1/${scope}/ui_${action}`;
+      this.url = `${process.env.CORE_ACTION_URL}/v1/${scope}/${action}`;
     } else {
-      this.url = `/api/core/action/${scope}/ui_${action}`;
+      this.url = `/api/core/action/${scope}/${action}`;
     }
 
     this.headers.set("prefer", "tx=commit,return=representation");
