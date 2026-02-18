@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { ProTable } from "@ant-design/pro-components";
+import { ProTable, } from "@ant-design/pro-components";
 import { Alert, App, Button, Spin, Typography } from "antd";
 import { isAxiosError } from "axios";
 import { Settings, AlertCircle } from "lucide-react";
@@ -34,133 +34,137 @@ const extractFiltersFromQuery = (queryString) => {
                 if (match) {
                     sortConfig = {
                         field: match[1],
-                        order: match[2] === "asc" ? "ascend" : "descend"
+                        order: match[2] === "asc" ? "ascend" : "descend",
                     };
                 }
                 return;
             }
             // Skip other structural parameters
-            if (['select', 'limit', 'offset', 'or', 'and'].includes(key)) {
+            if (["select", "limit", "offset", "or", "and"].includes(key)) {
                 return;
             }
             // Parse field filters
-            if (value === 'is.null') {
+            if (value === "is.null") {
                 filtersMap[key] = {
-                    operator: 'is_null',
-                    value: '',
-                    rawValue: value
+                    operator: "is_null",
+                    value: "",
+                    rawValue: value,
                 };
                 return;
             }
-            if (value === 'not.is.null') {
+            if (value === "not.is.null") {
                 filtersMap[key] = {
-                    operator: 'is_not_null',
-                    value: '',
-                    rawValue: value
+                    operator: "is_not_null",
+                    value: "",
+                    rawValue: value,
                 };
                 return;
             }
             // Parse operator.value format
-            const dotIndex = value.indexOf('.');
+            const dotIndex = value.indexOf(".");
             if (dotIndex === -1) {
                 // No operator, default to eq
                 filtersMap[key] = {
-                    operator: 'eq',
+                    operator: "eq",
                     value: decodeURIComponent(value),
-                    rawValue: value
+                    rawValue: value,
                 };
                 return;
             }
             let operator = value.slice(0, dotIndex);
             let operatorValue = value.slice(dotIndex + 1);
             // Handle negation
-            const isNegated = operator.startsWith('not.');
+            const isNegated = operator.startsWith("not.");
             if (isNegated) {
                 operator = operator.slice(4); // Remove 'not.' prefix
             }
             // Parse different operator types
             switch (operator) {
-                case 'eq':
+                case "eq":
                     filtersMap[key] = {
-                        operator: isNegated ? 'neq' : 'eq',
+                        operator: isNegated ? "neq" : "eq",
                         value: decodeURIComponent(operatorValue),
-                        rawValue: value
+                        rawValue: value,
                     };
                     break;
-                case 'neq':
+                case "neq":
                     filtersMap[key] = {
-                        operator: 'neq',
+                        operator: "neq",
                         value: decodeURIComponent(operatorValue),
-                        rawValue: value
+                        rawValue: value,
                     };
                     break;
-                case 'gt':
-                case 'gte':
-                case 'lt':
-                case 'lte':
+                case "gt":
+                case "gte":
+                case "lt":
+                case "lte":
                     filtersMap[key] = {
                         operator: isNegated ? `not_${operator}` : operator,
                         value: decodeURIComponent(operatorValue),
-                        rawValue: value
+                        rawValue: value,
                     };
                     break;
-                case 'like':
+                case "like":
                     // Extract pattern without wildcards for display
-                    const likePattern = operatorValue.replace(/^\*|\*$/g, '');
-                    const likeOp = operatorValue.startsWith('*') && operatorValue.endsWith('*')
-                        ? 'contain'
-                        : operatorValue.startsWith('*')
-                            ? 'ends_with'
-                            : operatorValue.endsWith('*')
-                                ? 'starts_with'
-                                : 'equal';
+                    const likePattern = operatorValue.replace(/^\*|\*$/g, "");
+                    const likeOp = operatorValue.startsWith("*") && operatorValue.endsWith("*")
+                        ? "contain"
+                        : operatorValue.startsWith("*")
+                            ? "ends_with"
+                            : operatorValue.endsWith("*")
+                                ? "starts_with"
+                                : "equal";
                     filtersMap[key] = {
                         operator: isNegated ? `not_${likeOp}` : likeOp,
                         value: decodeURIComponent(likePattern),
-                        rawValue: value
+                        rawValue: value,
                     };
                     break;
-                case 'ilike':
-                    const ilikePattern = operatorValue.replace(/^\*|\*$/g, '');
+                case "ilike":
+                    const ilikePattern = operatorValue.replace(/^\*|\*$/g, "");
                     filtersMap[key] = {
-                        operator: isNegated ? 'not_contain' : 'contain',
+                        operator: isNegated ? "not_contain" : "contain",
                         value: decodeURIComponent(ilikePattern),
-                        rawValue: value
+                        rawValue: value,
                     };
                     break;
-                case 'in':
+                case "in":
                     // Format: in.(value1,value2,value3)
                     const inMatch = operatorValue.match(/^\((.+)\)$/);
                     if (inMatch) {
-                        const values = inMatch[1].split(',').map(v => decodeURIComponent(v.trim()));
+                        const values = inMatch[1]
+                            .split(",")
+                            .map((v) => decodeURIComponent(v.trim()));
                         filtersMap[key] = {
-                            operator: isNegated ? 'not_in' : 'in',
+                            operator: isNegated ? "not_in" : "in",
                             value: values,
-                            rawValue: value
+                            rawValue: value,
                         };
                     }
                     break;
-                case 'cs':
+                case "cs":
                     // Format: cs.{value1,value2}
                     const csMatch = operatorValue.match(/^\{(.+)\}$/);
                     if (csMatch) {
-                        const values = csMatch[1].split(',').map(v => decodeURIComponent(v.trim()));
+                        const values = csMatch[1]
+                            .split(",")
+                            .map((v) => decodeURIComponent(v.trim()));
                         filtersMap[key] = {
-                            operator: isNegated ? 'not_contains' : 'contains',
+                            operator: isNegated ? "not_contains" : "contains",
                             value: values,
-                            rawValue: value
+                            rawValue: value,
                         };
                     }
                     break;
-                case 'phfts':
-                case 'plfts':
-                case 'wfts':
+                case "phfts":
+                case "plfts":
+                case "wfts":
                     // Full-text search
-                    const ftsValue = operatorValue.replace(/^english\./, '');
+                    const ftsValue = operatorValue.replace(/^english\./, "");
                     filtersMap[key] = {
-                        operator: 'fts',
+                        operator: "fts",
                         value: decodeURIComponent(ftsValue),
-                        rawValue: value
+                        rawValue: value,
                     };
                     break;
                 default:
@@ -168,7 +172,7 @@ const extractFiltersFromQuery = (queryString) => {
                     filtersMap[key] = {
                         operator,
                         value: decodeURIComponent(operatorValue),
-                        rawValue: value
+                        rawValue: value,
                     };
             }
         });
@@ -188,7 +192,7 @@ const convertToProTableFilter = (filter) => {
     // This is typically an array with the filter definition as JSON string
     const filterObject = {
         filter: filter.operator,
-        value: filter.value
+        value: filter.value,
     };
     return [JSON.stringify(filterObject)];
 };
@@ -203,42 +207,74 @@ const validateQueryString = (queryString) => {
         const params = new URLSearchParams(queryString);
         // Valid operators
         const validOperators = new Set([
-            'eq', 'neq', 'gt', 'gte', 'lt', 'lte',
-            'like', 'ilike', 'not.like', 'not.ilike',
-            'in', 'not.in', 'is', 'not.is',
-            'cs', 'not.cs', 'cd', 'not.cd',
-            'ov', 'not.ov', 'sl', 'not.sl',
-            'sr', 'not.sr', 'nxl', 'not.nxl',
-            'nxr', 'not.nxr', 'adj', 'not.adj',
-            'phfts', 'plfts', 'wfts'
+            "eq",
+            "neq",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "like",
+            "ilike",
+            "not.like",
+            "not.ilike",
+            "in",
+            "not.in",
+            "is",
+            "not.is",
+            "cs",
+            "not.cs",
+            "cd",
+            "not.cd",
+            "ov",
+            "not.ov",
+            "sl",
+            "not.sl",
+            "sr",
+            "not.sr",
+            "nxl",
+            "not.nxl",
+            "nxr",
+            "not.nxr",
+            "adj",
+            "not.adj",
+            "phfts",
+            "plfts",
+            "wfts",
         ]);
         // Valid structural keys
-        const structuralKeys = new Set(['select', 'order', 'limit', 'offset', 'or', 'and']);
+        const structuralKeys = new Set([
+            "select",
+            "order",
+            "limit",
+            "offset",
+            "or",
+            "and",
+        ]);
         params.forEach((value, key) => {
             // Skip structural parameters
             if (structuralKeys.has(key)) {
                 // Validate structural parameters
                 switch (key) {
-                    case 'limit':
-                    case 'offset':
+                    case "limit":
+                    case "offset":
                         if (isNaN(Number(value)) || Number(value) < 0) {
                             errors.push(`${key} must be a non-negative number, got: ${value}`);
                         }
                         break;
-                    case 'order':
+                    case "order":
                         // Format: column.asc or column.desc
                         if (!value.match(/^[a-zA-Z_][a-zA-Z0-9_]*\.(asc|desc)$/)) {
                             errors.push(`Invalid order format: ${value}. Expected: column.asc or column.desc`);
                         }
                         break;
-                    case 'select':
+                    case "select":
                         // Format: column1,column2 or column1(subfield1,subfield2)
                         if (!value.match(/^[a-zA-Z_][a-zA-Z0-9_,().*]*$/)) {
                             warnings.push(`Potentially invalid select format: ${value}`);
                         }
                         break;
-                    case 'or':
-                    case 'and':
+                    case "or":
+                    case "and":
                         // Format: (condition1,condition2)
                         if (!value.match(/^\(.+\)$/)) {
                             errors.push(`${key} must be wrapped in parentheses: ${value}`);
@@ -248,12 +284,12 @@ const validateQueryString = (queryString) => {
                 return;
             }
             // Validate field filters
-            if (value === 'is.null' || value === 'not.is.null') {
+            if (value === "is.null" || value === "not.is.null") {
                 // Valid null checks
                 return;
             }
             // Check for operator format: operator.value
-            const dotIndex = value.indexOf('.');
+            const dotIndex = value.indexOf(".");
             if (dotIndex === -1) {
                 // No operator, might be shorthand for eq
                 warnings.push(`No operator specified for ${key}, will default to eq: ${value}`);
@@ -262,21 +298,21 @@ const validateQueryString = (queryString) => {
             const operator = value.slice(0, dotIndex);
             const operatorValue = value.slice(dotIndex + 1);
             // Handle negation prefix
-            const actualOperator = operator.startsWith('not.')
-                ? operator
-                : operator;
+            const actualOperator = operator.startsWith("not.") ? operator : operator;
             // Check if operator is valid
-            if (!validOperators.has(actualOperator) && !actualOperator.startsWith('phfts') && !actualOperator.startsWith('plfts')) {
+            if (!validOperators.has(actualOperator) &&
+                !actualOperator.startsWith("phfts") &&
+                !actualOperator.startsWith("plfts")) {
                 errors.push(`Unknown operator '${actualOperator}' for field '${key}' in: ${value}`);
             }
             // Validate operator-specific formats
-            if (actualOperator === 'in' || actualOperator === 'not.in') {
+            if (actualOperator === "in" || actualOperator === "not.in") {
                 // Format: in.(value1,value2,value3)
                 if (!operatorValue.match(/^\(.+\)$/)) {
                     errors.push(`'in' operator must have values in parentheses for field '${key}': ${value}`);
                 }
             }
-            if (actualOperator === 'cs' || actualOperator === 'not.cs') {
+            if (actualOperator === "cs" || actualOperator === "not.cs") {
                 // Format: cs.{value1,value2}
                 if (!operatorValue.match(/^\{.+\}$/)) {
                     errors.push(`'cs' operator must have values in curly braces for field '${key}': ${value}`);
@@ -287,29 +323,29 @@ const validateQueryString = (queryString) => {
                 warnings.push(`Potentially invalid field name: ${key}`);
             }
             // Check for empty values
-            if (!operatorValue || operatorValue.trim() === '') {
+            if (!operatorValue || operatorValue.trim() === "") {
                 errors.push(`Empty value for field '${key}' with operator '${actualOperator}'`);
             }
         });
         // Check for common mistakes
         const queryLower = queryString.toLowerCase();
-        if (queryLower.includes('=like.%') || queryLower.includes('=ilike.%')) {
-            warnings.push('Pattern matching: Use * instead of % for wildcards (e.g., like.*value* not like.%value%)');
+        if (queryLower.includes("=like.%") || queryLower.includes("=ilike.%")) {
+            warnings.push("Pattern matching: Use * instead of % for wildcards (e.g., like.*value* not like.%value%)");
         }
-        if (queryLower.includes(' and ') || queryLower.includes(' or ')) {
-            warnings.push('Logical operators should use the and=(...) or or=(...) format, not inline AND/OR');
+        if (queryLower.includes(" and ") || queryLower.includes(" or ")) {
+            warnings.push("Logical operators should use the and=(...) or or=(...) format, not inline AND/OR");
         }
-        if (queryString.includes('==')) {
-            errors.push('Use single = for assignment, not ==');
+        if (queryString.includes("==")) {
+            errors.push("Use single = for assignment, not ==");
         }
     }
     catch (error) {
-        errors.push(`Failed to parse query string: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        errors.push(`Failed to parse query string: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
     return {
         isValid: errors.length === 0,
         errors,
-        warnings
+        warnings,
     };
 };
 /* -------------------- Custom Hooks -------------------- */
@@ -332,7 +368,7 @@ const usePermissions = (entity, scope) => {
                 if (!mounted)
                     return;
                 const message = isAxiosError(err)
-                    ? (_b = (_a = err.response) === null || _a === void 0 ? void 0 : _a.data) !== null && _b !== void 0 ? _b : "Permission check failed"
+                    ? ((_b = (_a = err.response) === null || _a === void 0 ? void 0 : _a.data) !== null && _b !== void 0 ? _b : "Permission check failed")
                     : "Permission check failed";
                 setError(message);
             }
@@ -342,7 +378,9 @@ const usePermissions = (entity, scope) => {
             }
         };
         checkPermissions();
-        return () => { mounted = false; };
+        return () => {
+            mounted = false;
+        };
     }, [entity, scope]);
     return { permissions, loading, error };
 };
@@ -369,17 +407,17 @@ const useUrlState = () => {
         initialPagination,
         filtersMap,
         sortConfig,
-        urlKey
+        urlKey,
     };
 };
 /* -------------------- Main Component -------------------- */
-const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = false, disableDelete = false, customColumns = [], fieldsList, extendsField, createFormInitialData, updateDataTransform, excludeCreateForm, excludeUpdateForm, createForm, updateForm, getRefURL, dataCoreFilter, redirectAfterCreate, afterCreate, afterDelete, afterUpdate, createBtnTitle, customRowAction, expandable, transformCreateData, transformUpdateData, createPreProcess, onRow, params, showIndexColumn = true, defaultPageSize = 10, enablePersistentState = true, persistenceKey, search, options, toolBarRender, pagination, queryStringKey = "q", footer }) => {
+const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = false, disableDelete = false, customColumns = [], fieldsList, extendsField, createFormInitialData, updateDataTransform, excludeCreateForm, excludeUpdateForm, createForm, updateForm, getRefURL, dataCoreFilter, redirectAfterCreate, afterCreate, afterDelete, afterUpdate, createBtnTitle, customRowAction, expandable, transformCreateData, transformUpdateData, createPreProcess, onRow, params, showIndexColumn = true, defaultPageSize = 10, enablePersistentState = true, persistenceKey, search, options, toolBarRender, pagination, queryStringKey = "q", footer, searchFormRender, }) => {
     var _a;
     const actionRef = useRef(undefined);
     const [dataLoading, setDataLoading] = useState(false);
     const app = App.useApp();
     const { permissions, loading: permissionsLoading, error: permissionsError, } = usePermissions(entity, scope);
-    const { router, pathname, searchParams, initialPagination, filtersMap, sortConfig, urlKey } = useUrlState();
+    const { router, pathname, searchParams, initialPagination, filtersMap, sortConfig, urlKey, } = useUrlState();
     // Columns generation
     const columns = useMemo(() => {
         const cols = [];
@@ -493,14 +531,14 @@ const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = fals
                 // Log warnings
                 if (validation.warnings.length > 0) {
                     console.warn("Query string warnings:", validation.warnings);
-                    validation.warnings.forEach(warning => {
+                    validation.warnings.forEach((warning) => {
                         app.message.warning(warning, 3);
                     });
                 }
                 // Handle errors
                 if (!validation.isValid) {
                     console.error("Query string validation errors:", validation.errors);
-                    validation.errors.forEach(error => {
+                    validation.errors.forEach((error) => {
                         app.message.error(error, 5);
                     });
                     // Still try to apply the query, but user is warned
@@ -543,7 +581,6 @@ const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = fals
             };
         }
         catch (error) {
-            console.error("ADT request error:", error);
             let message = "Something went wrong fetching data";
             if (isAxiosError(error)) {
                 message =
@@ -651,23 +688,33 @@ const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = fals
                         // Set operators
                         case "in":
                             if (Array.isArray(filterValue)) {
-                                const values = filterValue.map(v => encodeURIComponent(v)).join(",");
+                                const values = filterValue
+                                    .map((v) => encodeURIComponent(v))
+                                    .join(",");
                                 queryParts.push(`${key}=in.(${values})`);
                             }
                             else if (typeof filterValue === "string") {
                                 // Handle comma-separated string
-                                const values = filterValue.split(",").map(v => encodeURIComponent(v.trim())).join(",");
+                                const values = filterValue
+                                    .split(",")
+                                    .map((v) => encodeURIComponent(v.trim()))
+                                    .join(",");
                                 queryParts.push(`${key}=in.(${values})`);
                             }
                             break;
                         case "not_in":
                         case "not in":
                             if (Array.isArray(filterValue)) {
-                                const values = filterValue.map(v => encodeURIComponent(v)).join(",");
+                                const values = filterValue
+                                    .map((v) => encodeURIComponent(v))
+                                    .join(",");
                                 queryParts.push(`${key}=not.in.(${values})`);
                             }
                             else if (typeof filterValue === "string") {
-                                const values = filterValue.split(",").map(v => encodeURIComponent(v.trim())).join(",");
+                                const values = filterValue
+                                    .split(",")
+                                    .map((v) => encodeURIComponent(v.trim()))
+                                    .join(",");
                                 queryParts.push(`${key}=not.in.(${values})`);
                             }
                             break;
@@ -694,7 +741,7 @@ const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = fals
                 catch (error) {
                     // If not a JSON string, treat as simple array for 'in' operator
                     console.warn("Failed to parse filter, using simple array:", error);
-                    const values = value.map(v => encodeURIComponent(v)).join(",");
+                    const values = value.map((v) => encodeURIComponent(v)).join(",");
                     queryParts.push(`${key}=in.(${values})`);
                 }
             }
@@ -744,7 +791,14 @@ const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = fals
             router.replace(`${pathname}?${nextQuery}`, { scroll: false });
         }
         (_a = actionRef.current) === null || _a === void 0 ? void 0 : _a.reload();
-    }, [pathname, router, searchParams, defaultPageSize, queryStringKey, buildQueryString]);
+    }, [
+        pathname,
+        router,
+        searchParams,
+        defaultPageSize,
+        queryStringKey,
+        buildQueryString,
+    ]);
     // Loading states
     if (permissionsLoading) {
         return (_jsx(Alert, { message: _jsxs("div", { className: "flex items-center gap-2", children: [_jsx(Spin, { size: "small" }), _jsx(Text, { children: "Checking permissions..." })] }), type: "info" }));
@@ -756,7 +810,7 @@ const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = fals
         return (_jsx(Alert, { message: "Access Denied", description: `You do not have permission to read ${scope} scope ${entity} entity data.`, type: "warning", showIcon: true }));
     }
     const tableTitle = (_jsx("div", { className: "flex items-center justify-between", children: _jsx(Text, { strong: true, children: title }) }));
-    return (_jsx("div", { className: "h-[100px] overflow-hidden", children: _jsx(ProTable, { loading: dataLoading, expandable: expandable, scroll: { x: 100 }, columns: columns, actionRef: actionRef, cardBordered: true, headerTitle: tableTitle, onRow: onRow, request: request, search: search !== null && search !== void 0 ? search : false, footer: () => footer, columnsState: enablePersistentState
+    return (_jsx("div", { className: "h-[100px] overflow-hidden", children: _jsx(ProTable, { loading: dataLoading, expandable: expandable, scroll: { x: 100 }, columns: columns, searchFormRender: searchFormRender, actionRef: actionRef, cardBordered: true, headerTitle: tableTitle, onRow: onRow, request: request, search: search !== null && search !== void 0 ? search : false, footer: () => footer, columnsState: enablePersistentState
                 ? {
                     persistenceKey: persistenceKey || `adt-${entity}-${scope}`,
                     persistenceType: "localStorage",

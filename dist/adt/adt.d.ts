@@ -1,7 +1,7 @@
 import { ActionType, ParamsType, ProColumns, ProTableProps } from "@ant-design/pro-components";
 import { ExpandableConfig } from "antd/es/table/interface";
 import { FormInstance } from "antd/lib";
-import { FunctionComponent, ReactNode, RefObject } from "react";
+import { FunctionComponent, JSX, ReactNode, RefObject } from "react";
 import { DataCore } from "../core-client/client";
 interface ADTProps {
     title: string;
@@ -40,12 +40,15 @@ interface ADTProps {
     defaultPageSize?: number;
     enablePersistentState?: boolean;
     persistenceKey?: string;
-    search?: ProTableProps<Record<string, any>, ParamsType>['search'];
-    options?: ProTableProps<Record<string, any>, ParamsType>['options'];
-    toolBarRender?: ProTableProps<Record<string, any>, ParamsType>['toolBarRender'];
-    pagination?: ProTableProps<Record<string, any>, ParamsType>['pagination'];
+    search?: ProTableProps<Record<string, any>, ParamsType>["search"];
+    options?: ProTableProps<Record<string, any>, ParamsType>["options"];
+    toolBarRender?: ProTableProps<Record<string, any>, ParamsType>["toolBarRender"];
+    pagination?: ProTableProps<Record<string, any>, ParamsType>["pagination"];
     queryStringKey?: string;
     footer?: ReactNode;
+    searchFormRender?: ((props: ProTableProps<Record<string, any>, {
+        __q: string | null;
+    }, "string">, defaultDom: JSX.Element) => React.ReactNode) | undefined;
 }
 declare const ADT: FunctionComponent<ADTProps>;
 export default ADT;

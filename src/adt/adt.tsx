@@ -7,7 +7,7 @@ import {
   ParamsType,
   ProColumns,
   ProTable,
-  ProTableProps
+  ProTableProps,
 } from "@ant-design/pro-components";
 import { Alert, App, Button, Spin, Typography } from "antd";
 import { ExpandableConfig } from "antd/es/table/interface";
@@ -18,6 +18,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   FunctionComponent,
+  JSX,
   ReactNode,
   RefObject,
   useCallback,
@@ -59,10 +60,10 @@ interface ADTProps {
 
   updateDataTransform?: (data: Record<string, any>) => Record<string, any>;
   transformCreateData?: (
-    data: Record<string, any>
+    data: Record<string, any>,
   ) => Record<string, any> | Record<string, any>[];
   transformUpdateData?: (
-    data: Record<string, any>
+    data: Record<string, any>,
   ) => Record<string, any> | Record<string, any>[];
 
   createFormInitialData?: Record<string, any>;
@@ -82,7 +83,7 @@ interface ADTProps {
   createPreProcess?: (record: Record<string, any>) => Promise<void>;
   customRowAction?: (
     record: Record<string, any>,
-    actionRef?: RefObject<ActionType | undefined>
+    actionRef?: RefObject<ActionType | undefined>,
   ) => ReactNode[];
 
   expandable?: ExpandableConfig<Record<string, any>>;
@@ -96,15 +97,29 @@ interface ADTProps {
   enablePersistentState?: boolean;
   persistenceKey?: string;
 
-  search?: ProTableProps<Record<string, any>, ParamsType>['search'];
-  options?: ProTableProps<Record<string, any>, ParamsType>['options'];
-  toolBarRender?: ProTableProps<Record<string, any>, ParamsType>['toolBarRender'];
-  pagination?: ProTableProps<Record<string, any>, ParamsType>['pagination'];
+  search?: ProTableProps<Record<string, any>, ParamsType>["search"];
+  options?: ProTableProps<Record<string, any>, ParamsType>["options"];
+  toolBarRender?: ProTableProps<
+    Record<string, any>,
+    ParamsType
+  >["toolBarRender"];
+  pagination?: ProTableProps<Record<string, any>, ParamsType>["pagination"];
 
   queryStringKey?: string;
 
   footer?: ReactNode;
-
+  searchFormRender?:
+    | ((
+        props: ProTableProps<
+          Record<string, any>,
+          {
+            __q: string | null;
+          },
+          "string"
+        >,
+        defaultDom: JSX.Element,
+      ) => React.ReactNode)
+    | undefined;
 }
 
 /* -------------------- Query String Parsing -------------------- */
@@ -124,7 +139,9 @@ interface ParsedSort {
  * Extract filters and sorting from query string
  * Returns a map of column names to filter objects for ProTable
  */
-const extractFiltersFromQuery = (queryString: string | null): {
+const extractFiltersFromQuery = (
+  queryString: string | null,
+): {
   filtersMap: Record<string, ParsedFilter | null>;
   sortConfig: ParsedSort | null;
 } => {
@@ -145,44 +162,44 @@ const extractFiltersFromQuery = (queryString: string | null): {
         if (match) {
           sortConfig = {
             field: match[1],
-            order: match[2] === "asc" ? "ascend" : "descend"
+            order: match[2] === "asc" ? "ascend" : "descend",
           };
         }
         return;
       }
 
       // Skip other structural parameters
-      if (['select', 'limit', 'offset', 'or', 'and'].includes(key)) {
+      if (["select", "limit", "offset", "or", "and"].includes(key)) {
         return;
       }
 
       // Parse field filters
-      if (value === 'is.null') {
+      if (value === "is.null") {
         filtersMap[key] = {
-          operator: 'is_null',
-          value: '',
-          rawValue: value
+          operator: "is_null",
+          value: "",
+          rawValue: value,
         };
         return;
       }
 
-      if (value === 'not.is.null') {
+      if (value === "not.is.null") {
         filtersMap[key] = {
-          operator: 'is_not_null',
-          value: '',
-          rawValue: value
+          operator: "is_not_null",
+          value: "",
+          rawValue: value,
         };
         return;
       }
 
       // Parse operator.value format
-      const dotIndex = value.indexOf('.');
+      const dotIndex = value.indexOf(".");
       if (dotIndex === -1) {
         // No operator, default to eq
         filtersMap[key] = {
-          operator: 'eq',
+          operator: "eq",
           value: decodeURIComponent(value),
-          rawValue: value
+          rawValue: value,
         };
         return;
       }
@@ -191,102 +208,107 @@ const extractFiltersFromQuery = (queryString: string | null): {
       let operatorValue = value.slice(dotIndex + 1);
 
       // Handle negation
-      const isNegated = operator.startsWith('not.');
+      const isNegated = operator.startsWith("not.");
       if (isNegated) {
         operator = operator.slice(4); // Remove 'not.' prefix
       }
 
       // Parse different operator types
       switch (operator) {
-        case 'eq':
+        case "eq":
           filtersMap[key] = {
-            operator: isNegated ? 'neq' : 'eq',
+            operator: isNegated ? "neq" : "eq",
             value: decodeURIComponent(operatorValue),
-            rawValue: value
+            rawValue: value,
           };
           break;
 
-        case 'neq':
+        case "neq":
           filtersMap[key] = {
-            operator: 'neq',
+            operator: "neq",
             value: decodeURIComponent(operatorValue),
-            rawValue: value
+            rawValue: value,
           };
           break;
 
-        case 'gt':
-        case 'gte':
-        case 'lt':
-        case 'lte':
+        case "gt":
+        case "gte":
+        case "lt":
+        case "lte":
           filtersMap[key] = {
             operator: isNegated ? `not_${operator}` : operator,
             value: decodeURIComponent(operatorValue),
-            rawValue: value
+            rawValue: value,
           };
           break;
 
-        case 'like':
+        case "like":
           // Extract pattern without wildcards for display
-          const likePattern = operatorValue.replace(/^\*|\*$/g, '');
-          const likeOp = operatorValue.startsWith('*') && operatorValue.endsWith('*')
-            ? 'contain'
-            : operatorValue.startsWith('*')
-            ? 'ends_with'
-            : operatorValue.endsWith('*')
-            ? 'starts_with'
-            : 'equal';
-          
+          const likePattern = operatorValue.replace(/^\*|\*$/g, "");
+          const likeOp =
+            operatorValue.startsWith("*") && operatorValue.endsWith("*")
+              ? "contain"
+              : operatorValue.startsWith("*")
+                ? "ends_with"
+                : operatorValue.endsWith("*")
+                  ? "starts_with"
+                  : "equal";
+
           filtersMap[key] = {
             operator: isNegated ? `not_${likeOp}` : likeOp,
             value: decodeURIComponent(likePattern),
-            rawValue: value
+            rawValue: value,
           };
           break;
 
-        case 'ilike':
-          const ilikePattern = operatorValue.replace(/^\*|\*$/g, '');
+        case "ilike":
+          const ilikePattern = operatorValue.replace(/^\*|\*$/g, "");
           filtersMap[key] = {
-            operator: isNegated ? 'not_contain' : 'contain',
+            operator: isNegated ? "not_contain" : "contain",
             value: decodeURIComponent(ilikePattern),
-            rawValue: value
+            rawValue: value,
           };
           break;
 
-        case 'in':
+        case "in":
           // Format: in.(value1,value2,value3)
           const inMatch = operatorValue.match(/^\((.+)\)$/);
           if (inMatch) {
-            const values = inMatch[1].split(',').map(v => decodeURIComponent(v.trim()));
+            const values = inMatch[1]
+              .split(",")
+              .map((v) => decodeURIComponent(v.trim()));
             filtersMap[key] = {
-              operator: isNegated ? 'not_in' : 'in',
+              operator: isNegated ? "not_in" : "in",
               value: values,
-              rawValue: value
+              rawValue: value,
             };
           }
           break;
 
-        case 'cs':
+        case "cs":
           // Format: cs.{value1,value2}
           const csMatch = operatorValue.match(/^\{(.+)\}$/);
           if (csMatch) {
-            const values = csMatch[1].split(',').map(v => decodeURIComponent(v.trim()));
+            const values = csMatch[1]
+              .split(",")
+              .map((v) => decodeURIComponent(v.trim()));
             filtersMap[key] = {
-              operator: isNegated ? 'not_contains' : 'contains',
+              operator: isNegated ? "not_contains" : "contains",
               value: values,
-              rawValue: value
+              rawValue: value,
             };
           }
           break;
 
-        case 'phfts':
-        case 'plfts':
-        case 'wfts':
+        case "phfts":
+        case "plfts":
+        case "wfts":
           // Full-text search
-          const ftsValue = operatorValue.replace(/^english\./, '');
+          const ftsValue = operatorValue.replace(/^english\./, "");
           filtersMap[key] = {
-            operator: 'fts',
+            operator: "fts",
             value: decodeURIComponent(ftsValue),
-            rawValue: value
+            rawValue: value,
           };
           break;
 
@@ -295,11 +317,10 @@ const extractFiltersFromQuery = (queryString: string | null): {
           filtersMap[key] = {
             operator,
             value: decodeURIComponent(operatorValue),
-            rawValue: value
+            rawValue: value,
           };
       }
     });
-
   } catch (error) {
     console.error("Failed to extract filters from query string:", error);
   }
@@ -317,7 +338,7 @@ const convertToProTableFilter = (filter: ParsedFilter | null): any[] | null => {
   // This is typically an array with the filter definition as JSON string
   const filterObject = {
     filter: filter.operator,
-    value: filter.value
+    value: filter.value,
   };
 
   return [JSON.stringify(filterObject)];
@@ -345,44 +366,80 @@ const validateQueryString = (queryString: string): ValidationResult => {
 
     // Valid operators
     const validOperators = new Set([
-      'eq', 'neq', 'gt', 'gte', 'lt', 'lte',
-      'like', 'ilike', 'not.like', 'not.ilike',
-      'in', 'not.in', 'is', 'not.is',
-      'cs', 'not.cs', 'cd', 'not.cd',
-      'ov', 'not.ov', 'sl', 'not.sl',
-      'sr', 'not.sr', 'nxl', 'not.nxl',
-      'nxr', 'not.nxr', 'adj', 'not.adj',
-      'phfts', 'plfts', 'wfts'
+      "eq",
+      "neq",
+      "gt",
+      "gte",
+      "lt",
+      "lte",
+      "like",
+      "ilike",
+      "not.like",
+      "not.ilike",
+      "in",
+      "not.in",
+      "is",
+      "not.is",
+      "cs",
+      "not.cs",
+      "cd",
+      "not.cd",
+      "ov",
+      "not.ov",
+      "sl",
+      "not.sl",
+      "sr",
+      "not.sr",
+      "nxl",
+      "not.nxl",
+      "nxr",
+      "not.nxr",
+      "adj",
+      "not.adj",
+      "phfts",
+      "plfts",
+      "wfts",
     ]);
 
     // Valid structural keys
-    const structuralKeys = new Set(['select', 'order', 'limit', 'offset', 'or', 'and']);
+    const structuralKeys = new Set([
+      "select",
+      "order",
+      "limit",
+      "offset",
+      "or",
+      "and",
+    ]);
 
     params.forEach((value, key) => {
       // Skip structural parameters
       if (structuralKeys.has(key)) {
         // Validate structural parameters
         switch (key) {
-          case 'limit':
-          case 'offset':
+          case "limit":
+          case "offset":
             if (isNaN(Number(value)) || Number(value) < 0) {
-              errors.push(`${key} must be a non-negative number, got: ${value}`);
+              errors.push(
+                `${key} must be a non-negative number, got: ${value}`,
+              );
             }
             break;
-          case 'order':
+          case "order":
             // Format: column.asc or column.desc
             if (!value.match(/^[a-zA-Z_][a-zA-Z0-9_]*\.(asc|desc)$/)) {
-              errors.push(`Invalid order format: ${value}. Expected: column.asc or column.desc`);
+              errors.push(
+                `Invalid order format: ${value}. Expected: column.asc or column.desc`,
+              );
             }
             break;
-          case 'select':
+          case "select":
             // Format: column1,column2 or column1(subfield1,subfield2)
             if (!value.match(/^[a-zA-Z_][a-zA-Z0-9_,().*]*$/)) {
               warnings.push(`Potentially invalid select format: ${value}`);
             }
             break;
-          case 'or':
-          case 'and':
+          case "or":
+          case "and":
             // Format: (condition1,condition2)
             if (!value.match(/^\(.+\)$/)) {
               errors.push(`${key} must be wrapped in parentheses: ${value}`);
@@ -393,16 +450,18 @@ const validateQueryString = (queryString: string): ValidationResult => {
       }
 
       // Validate field filters
-      if (value === 'is.null' || value === 'not.is.null') {
+      if (value === "is.null" || value === "not.is.null") {
         // Valid null checks
         return;
       }
 
       // Check for operator format: operator.value
-      const dotIndex = value.indexOf('.');
+      const dotIndex = value.indexOf(".");
       if (dotIndex === -1) {
         // No operator, might be shorthand for eq
-        warnings.push(`No operator specified for ${key}, will default to eq: ${value}`);
+        warnings.push(
+          `No operator specified for ${key}, will default to eq: ${value}`,
+        );
         return;
       }
 
@@ -410,27 +469,35 @@ const validateQueryString = (queryString: string): ValidationResult => {
       const operatorValue = value.slice(dotIndex + 1);
 
       // Handle negation prefix
-      const actualOperator = operator.startsWith('not.') 
-        ? operator 
-        : operator;
+      const actualOperator = operator.startsWith("not.") ? operator : operator;
 
       // Check if operator is valid
-      if (!validOperators.has(actualOperator) && !actualOperator.startsWith('phfts') && !actualOperator.startsWith('plfts')) {
-        errors.push(`Unknown operator '${actualOperator}' for field '${key}' in: ${value}`);
+      if (
+        !validOperators.has(actualOperator) &&
+        !actualOperator.startsWith("phfts") &&
+        !actualOperator.startsWith("plfts")
+      ) {
+        errors.push(
+          `Unknown operator '${actualOperator}' for field '${key}' in: ${value}`,
+        );
       }
 
       // Validate operator-specific formats
-      if (actualOperator === 'in' || actualOperator === 'not.in') {
+      if (actualOperator === "in" || actualOperator === "not.in") {
         // Format: in.(value1,value2,value3)
         if (!operatorValue.match(/^\(.+\)$/)) {
-          errors.push(`'in' operator must have values in parentheses for field '${key}': ${value}`);
+          errors.push(
+            `'in' operator must have values in parentheses for field '${key}': ${value}`,
+          );
         }
       }
 
-      if (actualOperator === 'cs' || actualOperator === 'not.cs') {
+      if (actualOperator === "cs" || actualOperator === "not.cs") {
         // Format: cs.{value1,value2}
         if (!operatorValue.match(/^\{.+\}$/)) {
-          errors.push(`'cs' operator must have values in curly braces for field '${key}': ${value}`);
+          errors.push(
+            `'cs' operator must have values in curly braces for field '${key}': ${value}`,
+          );
         }
       }
 
@@ -440,34 +507,41 @@ const validateQueryString = (queryString: string): ValidationResult => {
       }
 
       // Check for empty values
-      if (!operatorValue || operatorValue.trim() === '') {
-        errors.push(`Empty value for field '${key}' with operator '${actualOperator}'`);
+      if (!operatorValue || operatorValue.trim() === "") {
+        errors.push(
+          `Empty value for field '${key}' with operator '${actualOperator}'`,
+        );
       }
     });
 
     // Check for common mistakes
     const queryLower = queryString.toLowerCase();
-    
-    if (queryLower.includes('=like.%') || queryLower.includes('=ilike.%')) {
-      warnings.push('Pattern matching: Use * instead of % for wildcards (e.g., like.*value* not like.%value%)');
+
+    if (queryLower.includes("=like.%") || queryLower.includes("=ilike.%")) {
+      warnings.push(
+        "Pattern matching: Use * instead of % for wildcards (e.g., like.*value* not like.%value%)",
+      );
     }
 
-    if (queryLower.includes(' and ') || queryLower.includes(' or ')) {
-      warnings.push('Logical operators should use the and=(...) or or=(...) format, not inline AND/OR');
+    if (queryLower.includes(" and ") || queryLower.includes(" or ")) {
+      warnings.push(
+        "Logical operators should use the and=(...) or or=(...) format, not inline AND/OR",
+      );
     }
 
-    if (queryString.includes('==')) {
-      errors.push('Use single = for assignment, not ==');
+    if (queryString.includes("==")) {
+      errors.push("Use single = for assignment, not ==");
     }
-
   } catch (error) {
-    errors.push(`Failed to parse query string: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    errors.push(
+      `Failed to parse query string: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 
   return {
     isValid: errors.length === 0,
     errors,
-    warnings
+    warnings,
   };
 };
 
@@ -491,7 +565,7 @@ const usePermissions = (entity: string, scope: string) => {
       } catch (err) {
         if (!mounted) return;
         const message = isAxiosError(err)
-          ? err.response?.data ?? "Permission check failed"
+          ? (err.response?.data ?? "Permission check failed")
           : "Permission check failed";
         setError(message);
       } finally {
@@ -500,7 +574,9 @@ const usePermissions = (entity: string, scope: string) => {
     };
 
     checkPermissions();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [entity, scope]);
 
   return { permissions, loading, error };
@@ -525,7 +601,6 @@ const useUrlState = () => {
 
   const urlKey = useMemo(() => searchParams.get("q"), [searchParams]);
 
-
   return {
     router,
     pathname,
@@ -533,7 +608,7 @@ const useUrlState = () => {
     initialPagination,
     filtersMap,
     sortConfig,
-    urlKey
+    urlKey,
   };
 };
 
@@ -586,7 +661,8 @@ const ADT: FunctionComponent<ADTProps> = ({
   pagination,
 
   queryStringKey = "q",
-  footer
+  footer,
+  searchFormRender,
 }) => {
   const actionRef = useRef<ActionType | undefined>(undefined);
   const [dataLoading, setDataLoading] = useState(false);
@@ -598,7 +674,7 @@ const ADT: FunctionComponent<ADTProps> = ({
     loading: permissionsLoading,
     error: permissionsError,
   } = usePermissions(entity, scope);
-  
+
   const {
     router,
     pathname,
@@ -606,7 +682,7 @@ const ADT: FunctionComponent<ADTProps> = ({
     initialPagination,
     filtersMap,
     sortConfig,
-    urlKey
+    urlKey,
   } = useUrlState();
 
   // Columns generation
@@ -630,7 +706,7 @@ const ADT: FunctionComponent<ADTProps> = ({
         // Apply filters from query string
         if (typeof clone.dataIndex === "string") {
           const filter = filtersMap[clone.dataIndex];
-          
+
           if (filter && !(clone as any).defaultFilteredValue) {
             // Convert to ProTable filter format
             const proTableFilter = convertToProTableFilter(filter);
@@ -702,7 +778,7 @@ const ADT: FunctionComponent<ADTProps> = ({
                 excludeKeys={excludeUpdateForm}
                 afterUpdate={afterUpdate}
                 transformData={transformUpdateData}
-              />
+              />,
             );
           }
 
@@ -722,7 +798,7 @@ const ADT: FunctionComponent<ADTProps> = ({
                 coreId={record.core_id}
                 permission={permissions.delete.allow}
                 afterDelete={afterDelete}
-              />
+              />,
             );
           }
 
@@ -730,7 +806,7 @@ const ADT: FunctionComponent<ADTProps> = ({
             actions.push(
               <Link key={`ref-${record.core_id}`} href={getRefURL(record)}>
                 <Button type="text" icon={<Settings size={15} />} />
-              </Link>
+              </Link>,
             );
           }
 
@@ -765,47 +841,44 @@ const ADT: FunctionComponent<ADTProps> = ({
     async (
       parms: any,
       sort: Record<string, any>,
-      _filter: Record<string, any>
+      _filter: Record<string, any>,
     ) => {
       console.log("ADT request called with params:", parms, sort, _filter);
       try {
         setDataLoading(true);
         const dataSource = new DataCore(entity, scope);
-       
 
         // Apply query string if present
         const queryString = searchParams.get(queryStringKey);
         if (queryString) {
           console.log("Applying query string:", queryString);
-          
+
           // Validate query string
           const validation = validateQueryString(queryString);
-          
+
           // Log warnings
           if (validation.warnings.length > 0) {
             console.warn("Query string warnings:", validation.warnings);
-            validation.warnings.forEach(warning => {
+            validation.warnings.forEach((warning) => {
               app.message.warning(warning, 3);
             });
           }
-          
+
           // Handle errors
           if (!validation.isValid) {
             console.error("Query string validation errors:", validation.errors);
-            validation.errors.forEach(error => {
+            validation.errors.forEach((error) => {
               app.message.error(error, 5);
             });
-            
+
             // Still try to apply the query, but user is warned
             // You can choose to return early here if you want strict validation
             // return { data: [], success: false, total: 0 };
-          }else{
+          } else {
             console.log("Query string is valid.");
           }
-          
-          ApplyQuery(dataSource, queryString);
 
-        
+          ApplyQuery(dataSource, queryString);
         }
 
         // Pagination (always apply, can override query string)
@@ -844,8 +917,6 @@ const ADT: FunctionComponent<ADTProps> = ({
           total: result.count || 0,
         };
       } catch (error) {
-        console.error("ADT request error:", error);
-
         let message = "Something went wrong fetching data";
         if (isAxiosError(error)) {
           message =
@@ -872,7 +943,7 @@ const ADT: FunctionComponent<ADTProps> = ({
       extendsField,
       dataCoreFilter,
       app.message,
-    ]
+    ],
   );
 
   // Build query string from filters and sorters
@@ -900,24 +971,34 @@ const ADT: FunctionComponent<ADTProps> = ({
                 break;
               case "not_equal":
               case "not equals":
-                queryParts.push(`${key}=neq.${encodeURIComponent(filterValue)}`);
+                queryParts.push(
+                  `${key}=neq.${encodeURIComponent(filterValue)}`,
+                );
                 break;
 
               // Pattern matching
               case "contain":
               case "ilike":
-                queryParts.push(`${key}=ilike.*${encodeURIComponent(filterValue)}*`);
+                queryParts.push(
+                  `${key}=ilike.*${encodeURIComponent(filterValue)}*`,
+                );
                 break;
               case "not_contain":
               case "not ilike":
               case "not like":
-                queryParts.push(`${key}=not.like.*${encodeURIComponent(filterValue)}*`);
+                queryParts.push(
+                  `${key}=not.like.*${encodeURIComponent(filterValue)}*`,
+                );
                 break;
               case "starts_with":
-                queryParts.push(`${key}=like.${encodeURIComponent(filterValue)}*`);
+                queryParts.push(
+                  `${key}=like.${encodeURIComponent(filterValue)}*`,
+                );
                 break;
               case "ends_with":
-                queryParts.push(`${key}=like.*${encodeURIComponent(filterValue)}`);
+                queryParts.push(
+                  `${key}=like.*${encodeURIComponent(filterValue)}`,
+                );
                 break;
 
               // Comparison operators
@@ -927,7 +1008,9 @@ const ADT: FunctionComponent<ADTProps> = ({
                 break;
               case "gte":
               case "greater_than_or_equal":
-                queryParts.push(`${key}=gte.${encodeURIComponent(filterValue)}`);
+                queryParts.push(
+                  `${key}=gte.${encodeURIComponent(filterValue)}`,
+                );
                 break;
               case "lt":
               case "less_than":
@@ -935,16 +1018,24 @@ const ADT: FunctionComponent<ADTProps> = ({
                 break;
               case "lte":
               case "less_than_or_equal":
-                queryParts.push(`${key}=lte.${encodeURIComponent(filterValue)}`);
+                queryParts.push(
+                  `${key}=lte.${encodeURIComponent(filterValue)}`,
+                );
                 break;
 
               // Range operators
               case "between":
                 if (Array.isArray(filterValue) && filterValue.length >= 2) {
-                  queryParts.push(`${key}=gte.${encodeURIComponent(filterValue[0])}`);
-                  queryParts.push(`${key}=lte.${encodeURIComponent(filterValue[1])}`);
+                  queryParts.push(
+                    `${key}=gte.${encodeURIComponent(filterValue[0])}`,
+                  );
+                  queryParts.push(
+                    `${key}=lte.${encodeURIComponent(filterValue[1])}`,
+                  );
                 } else if (value1) {
-                  queryParts.push(`${key}=gte.${encodeURIComponent(filterValue)}`);
+                  queryParts.push(
+                    `${key}=gte.${encodeURIComponent(filterValue)}`,
+                  );
                   queryParts.push(`${key}=lte.${encodeURIComponent(value1)}`);
                 }
                 break;
@@ -952,11 +1043,11 @@ const ADT: FunctionComponent<ADTProps> = ({
               case "not between":
                 if (Array.isArray(filterValue) && filterValue.length >= 2) {
                   queryParts.push(
-                    `or=(${key}.lt.${encodeURIComponent(filterValue[0])},${key}.gt.${encodeURIComponent(filterValue[1])})`
+                    `or=(${key}.lt.${encodeURIComponent(filterValue[0])},${key}.gt.${encodeURIComponent(filterValue[1])})`,
                   );
                 } else if (value1) {
                   queryParts.push(
-                    `or=(${key}.lt.${encodeURIComponent(filterValue)},${key}.gt.${encodeURIComponent(value1)})`
+                    `or=(${key}.lt.${encodeURIComponent(filterValue)},${key}.gt.${encodeURIComponent(value1)})`,
                   );
                 }
                 break;
@@ -964,21 +1055,31 @@ const ADT: FunctionComponent<ADTProps> = ({
               // Set operators
               case "in":
                 if (Array.isArray(filterValue)) {
-                  const values = filterValue.map(v => encodeURIComponent(v)).join(",");
+                  const values = filterValue
+                    .map((v) => encodeURIComponent(v))
+                    .join(",");
                   queryParts.push(`${key}=in.(${values})`);
                 } else if (typeof filterValue === "string") {
                   // Handle comma-separated string
-                  const values = filterValue.split(",").map(v => encodeURIComponent(v.trim())).join(",");
+                  const values = filterValue
+                    .split(",")
+                    .map((v) => encodeURIComponent(v.trim()))
+                    .join(",");
                   queryParts.push(`${key}=in.(${values})`);
                 }
                 break;
               case "not_in":
               case "not in":
                 if (Array.isArray(filterValue)) {
-                  const values = filterValue.map(v => encodeURIComponent(v)).join(",");
+                  const values = filterValue
+                    .map((v) => encodeURIComponent(v))
+                    .join(",");
                   queryParts.push(`${key}=not.in.(${values})`);
                 } else if (typeof filterValue === "string") {
-                  const values = filterValue.split(",").map(v => encodeURIComponent(v.trim())).join(",");
+                  const values = filterValue
+                    .split(",")
+                    .map((v) => encodeURIComponent(v.trim()))
+                    .join(",");
                   queryParts.push(`${key}=not.in.(${values})`);
                 }
                 break;
@@ -996,7 +1097,9 @@ const ADT: FunctionComponent<ADTProps> = ({
               // Full-text search
               case "fts":
               case "plfts":
-                queryParts.push(`${key}=phfts(english).${encodeURIComponent(filterValue)}`);
+                queryParts.push(
+                  `${key}=phfts(english).${encodeURIComponent(filterValue)}`,
+                );
                 break;
 
               default:
@@ -1007,7 +1110,7 @@ const ADT: FunctionComponent<ADTProps> = ({
           } catch (error) {
             // If not a JSON string, treat as simple array for 'in' operator
             console.warn("Failed to parse filter, using simple array:", error);
-            const values = value.map(v => encodeURIComponent(v)).join(",");
+            const values = value.map((v) => encodeURIComponent(v)).join(",");
             queryParts.push(`${key}=in.(${values})`);
           }
         } else {
@@ -1027,7 +1130,7 @@ const ADT: FunctionComponent<ADTProps> = ({
 
       return queryParts.join("&");
     },
-    []
+    [],
   );
 
   // Table change handler with query string building
@@ -1037,7 +1140,7 @@ const ADT: FunctionComponent<ADTProps> = ({
 
       // Build and set query string from filters and sorters
       const newQuery = buildQueryString(filters, sorter);
-      
+
       if (newQuery) {
         next.set(queryStringKey, newQuery);
       } else {
@@ -1067,7 +1170,14 @@ const ADT: FunctionComponent<ADTProps> = ({
 
       actionRef.current?.reload();
     },
-    [pathname, router, searchParams, defaultPageSize, queryStringKey, buildQueryString]
+    [
+      pathname,
+      router,
+      searchParams,
+      defaultPageSize,
+      queryStringKey,
+      buildQueryString,
+    ],
   );
 
   // Loading states
@@ -1116,20 +1226,20 @@ const ADT: FunctionComponent<ADTProps> = ({
 
   return (
     <div className="h-[100px] overflow-hidden">
-     
       <ProTable
         loading={dataLoading}
         expandable={expandable}
         key="adt"
         scroll={{ x: 100 }}
         columns={columns}
+        searchFormRender={searchFormRender}
         actionRef={actionRef}
         cardBordered
         headerTitle={tableTitle}
         onRow={onRow}
         request={request}
         search={search ?? false}
-        footer={()=>footer}
+        footer={() => footer}
         columnsState={
           enablePersistentState
             ? {
@@ -1159,7 +1269,7 @@ const ADT: FunctionComponent<ADTProps> = ({
               `${range[0]}-${range[1]} of ${total} items`,
           }
         }
-       params={{ ...(params ?? {}), __q: urlKey }}
+        params={{ ...(params ?? {}), __q: urlKey }}
         onChange={onChange}
         toolBarRender={
           toolBarRender ??
@@ -1182,7 +1292,7 @@ const ADT: FunctionComponent<ADTProps> = ({
                   btnTitle={createBtnTitle}
                   transformData={transformCreateData}
                   preProcess={createPreProcess}
-                />
+                />,
               );
             }
 
