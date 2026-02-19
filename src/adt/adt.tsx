@@ -905,6 +905,16 @@ const ADT: FunctionComponent<ADTProps> = ({
           });
         }
 
+        const searchFilter: string[] = [];
+        params?.forEach((value: string, key: string) => {
+          if (!["current", "pageSize", "sort", "filter",'__q'].includes(key)) {
+            searchFilter.push(`${key}.${value}`);
+          }
+        });
+        if (searchFilter.length > 0) {
+          dataSource.and(searchFilter);
+        }
+
         // Apply custom data core filter (always runs last)
         if (dataCoreFilter) {
           dataCoreFilter(dataSource);

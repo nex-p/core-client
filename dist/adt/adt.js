@@ -569,6 +569,15 @@ const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = fals
                     }
                 });
             }
+            const searchFilter = [];
+            params === null || params === void 0 ? void 0 : params.forEach((value, key) => {
+                if (!["current", "pageSize", "sort", "filter", '__q'].includes(key)) {
+                    searchFilter.push(`${key}.${value}`);
+                }
+            });
+            if (searchFilter.length > 0) {
+                dataSource.and(searchFilter);
+            }
             // Apply custom data core filter (always runs last)
             if (dataCoreFilter) {
                 dataCoreFilter(dataSource);
