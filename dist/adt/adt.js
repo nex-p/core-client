@@ -569,8 +569,10 @@ const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = fals
                     }
                 });
             }
+            console.log("Applying additional params as filters:", params && Object.keys(params));
             if (params && Object.keys(params).length > 0) {
                 const searchFilter = [];
+                console.log("Applying additional params as filters:", searchFilter);
                 Object.keys(params).forEach((key) => {
                     const value = params[key];
                     if (!["current", "pageSize", "sort", "filter", "__q"].includes(key)) {

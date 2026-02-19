@@ -905,9 +905,11 @@ const ADT: FunctionComponent<ADTProps> = ({
           });
         }
 
+        console.log("Applying additional params as filters:", params && Object.keys(params));
         if (params && Object.keys(params).length > 0) {
           const searchFilter: string[] = [];
 
+          console.log("Applying additional params as filters:", searchFilter);
          
 
           Object.keys(params).forEach((key: string) => {
