@@ -905,14 +905,20 @@ const ADT: FunctionComponent<ADTProps> = ({
           });
         }
 
-        const searchFilter: string[] = [];
-        params?.forEach((value: string, key: string) => {
-          if (!["current", "pageSize", "sort", "filter",'__q'].includes(key)) {
-            searchFilter.push(`${key}.${value}`);
+        if (params && Object.keys(params).length > 0) {
+          const searchFilter: string[] = [];
+
+          Object.keys(params).forEach((key: string) => {
+            const value = params[key];
+            if (
+              !["current", "pageSize", "sort", "filter", "__q"].includes(key)
+            ) {
+              searchFilter.push(`${key}.${value}`);
+            }
+          });
+          if (searchFilter.length > 0) {
+            dataSource.and(searchFilter);
           }
-        });
-        if (searchFilter.length > 0) {
-          dataSource.and(searchFilter);
         }
 
         // Apply custom data core filter (always runs last)
