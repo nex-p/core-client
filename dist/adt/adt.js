@@ -580,6 +580,7 @@ const ADT = ({ title, entity, scope, disableCreate = false, disableUpdate = fals
                 if (searchFilter.length > 0) {
                     dataSource.and(searchFilter);
                 }
+                console.log("Applying additional params as filters:", searchFilter);
             }
             // Apply custom data core filter (always runs last)
             if (dataCoreFilter) {

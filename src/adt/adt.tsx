@@ -908,6 +908,8 @@ const ADT: FunctionComponent<ADTProps> = ({
         if (params && Object.keys(params).length > 0) {
           const searchFilter: string[] = [];
 
+         
+
           Object.keys(params).forEach((key: string) => {
             const value = params[key];
             if (
@@ -919,6 +921,7 @@ const ADT: FunctionComponent<ADTProps> = ({
           if (searchFilter.length > 0) {
             dataSource.and(searchFilter);
           }
+           console.log("Applying additional params as filters:", searchFilter);
         }
 
         // Apply custom data core filter (always runs last)
